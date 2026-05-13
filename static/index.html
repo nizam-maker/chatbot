@@ -283,7 +283,13 @@
     <div class="sidebar-section" style="flex:1;overflow-y:auto">
       <h3>Ingest document</h3>
       <div class="ingest-form">
-        <select id="ingest-domain"></select>
+        <label style="font-size:11px;color:var(--muted);font-weight:500">Select domain</label>
+        <select id="ingest-domain" style="width:100%;padding:8px 10px;border:1.5px solid var(--primary);border-radius:8px;font-size:13px;background:var(--bg);color:var(--bot-txt);outline:none;cursor:pointer">
+          <option value="car_specs">car_specs</option>
+          <option value="rebates_promos">rebates_promos</option>
+          <option value="faq_support">faq_support</option>
+          <option value="surat_khabar">surat_khabar</option>
+        </select>
         <input type="text" id="ingest-brand" placeholder="Brand (e.g. Proton)"/>
         <input type="text" id="ingest-model" placeholder="Model (e.g. Saga)"/>
         <label class="file-label">
@@ -361,19 +367,14 @@
         document.documentElement.style.setProperty("--tag-txt",   cfg.brand_color);
       }
 
-      // Domain tags + ingest dropdown
+      // Domain tags only — dropdown is hardcoded in HTML, don't touch it
       const tagBox = document.getElementById("domain-tags");
-      const sel    = document.getElementById("ingest-domain");
       tagBox.innerHTML = "";
-      sel.innerHTML    = "";
-      (cfg.domains || []).forEach(d => {
+      (cfg.domains || ["car_specs","rebates_promos","faq_support","surat_khabar"]).forEach(d => {
         const t = document.createElement("span");
         t.className   = "tag";
         t.textContent = d;
         tagBox.appendChild(t);
-        const o = document.createElement("option");
-        o.value = o.textContent = d;
-        sel.appendChild(o);
       });
 
       // Quick replies
@@ -497,9 +498,9 @@
     const domain = document.getElementById("ingest-domain").value;
     const brand  = document.getElementById("ingest-brand").value;
     const model  = document.getElementById("ingest-model").value;
-    const status = document.getElementById("ingest-status");
 
-    if (!file) { setStatus("Please select a PDF first.", false); return; }
+    if (!file)   { setStatus("Please select a PDF first.", false); return; }
+    if (!domain) { setStatus("Please select a domain first.", false); return; }
 
     setStatus("Ingesting…", null);
     const fd = new FormData();

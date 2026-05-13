@@ -110,7 +110,7 @@ async def api_session(session_id: str):
 @app.post("/api/ingest/pdf")
 async def api_ingest_pdf(
     file:   UploadFile = File(...),
-    domain: str        = Form(...),
+    domain: str        = Form("car_specs"),
     brand:  str        = Form(""),
     model:  str        = Form(""),
 ):
