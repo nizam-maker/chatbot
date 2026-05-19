@@ -22,6 +22,20 @@ from core.memory import load_session
 
 load_dotenv()
 
+# ── Auto-run DB init + seed on startup ───────────────────────
+try:
+    from tenants.laman_auto.schema import init_db, SessionLocal
+    from tenants.laman_auto.seed import seed_cars, seed_rebates, seed_customers
+    init_db()
+    with SessionLocal() as s:
+        seed_cars(s)
+        seed_rebates(s)
+        seed_customers(s)
+        s.commit()
+    print("[startup] DB ready ✓")
+except Exception as e:
+    print(f"[startup] DB seed skipped: {e}")
+
 # ── Load tenant config dynamically from .env ─────────────────
 TENANT = os.getenv("TENANT", "laman_auto")
 
