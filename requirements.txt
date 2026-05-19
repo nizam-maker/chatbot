@@ -13,3 +13,5 @@ python-dotenv
 pandas
 beautifulsoup4
 httpx
+apscheduler
+feedparser
