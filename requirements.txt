@@ -2,6 +2,7 @@ fastapi
 uvicorn
 anthropic
 sqlalchemy
+psycopg2-binary
 chromadb
 pdfplumber
 langchain-community
