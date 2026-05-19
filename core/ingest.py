@@ -13,7 +13,7 @@ from chromadb.utils.embedding_functions import (
 from langchain_community.document_loaders import PDFPlumberLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-CHROMA_PATH = "./chroma_db"
+CHROMA_PATH = os.getenv("CHROMA_PATH", "./chroma_db")
 CHUNK_SIZE  = 500
 CHUNK_OVERLAP = 50
 
