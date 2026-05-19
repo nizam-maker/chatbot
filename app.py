@@ -14,11 +14,13 @@ from fastapi import FastAPI, Request, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
 from core.engine import chat
 from core.ingest import ingest_pdf, ingest_text
 from core.memory import load_session
+from core.scheduler import start_scheduler, stop_scheduler, get_status
 
 load_dotenv()
 
@@ -36,6 +38,25 @@ try:
 except Exception as e:
     print(f"[startup] DB seed skipped: {e}")
 
+# ── Auto-ingest PDFs from knowledge/ folder on startup ────────
+try:
+    from core.ingest import ingest_pdf
+    import glob
+
+    knowledge_base = glob.glob("knowledge/**/*.pdf", recursive=True)
+    for pdf_path in knowledge_base:
+        # Path format: knowledge/laman_auto/car_specs/filename.pdf
+        parts  = pdf_path.replace("\\", "/").split("/")
+        if len(parts) >= 3:
+            tenant = parts[1]   # laman_auto
+            domain = parts[2]   # car_specs
+            ingest_pdf(pdf_path, tenant_id=tenant, domain=domain,
+                       meta={"auto_ingested": True})
+    if knowledge_base:
+        print(f"[startup] Auto-ingested {len(knowledge_base)} PDFs ✓")
+except Exception as e:
+    print(f"[startup] PDF ingest skipped: {e}")
+
 # ── Load tenant config dynamically from .env ─────────────────
 TENANT = os.getenv("TENANT", "laman_auto")
 
@@ -47,8 +68,16 @@ try:
 except ModuleNotFoundError:
     raise RuntimeError(f"Tenant '{TENANT}' not found in tenants/ folder.")
 
-# ── FastAPI app ───────────────────────────────────────────────
-app = FastAPI(title=tenant_cfg.get("BOT_NAME", "Chatbot"))
+# ── FastAPI app with lifespan ─────────────────────────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    start_scheduler()
+    yield
+    # Shutdown
+    stop_scheduler()
+
+app = FastAPI(title=tenant_cfg.get("BOT_NAME", "Chatbot"), lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -71,7 +100,7 @@ async def root():
     """Serve the chat UI."""
     html_path = "static/index.html"
     if os.path.exists(html_path):
-        with open(html_path, encoding="utf-8") as f:
+        with open(html_path) as f:
             return f.read()
     # Fallback — plain confirmation if UI not yet created
     return HTMLResponse("""
@@ -176,3 +205,33 @@ async def api_ingest_text(req: Request):
 async def health():
     return {"status": "ok", "tenant": TENANT,
             "domains": tenant_cfg.get("DOMAINS", [])}
+
+
+# ── ETL endpoints ─────────────────────────────────────────────
+
+@app.get("/api/etl/status")
+async def etl_status():
+    """Return scheduler status and last run times."""
+    return get_status()
+
+
+@app.post("/api/scrape")
+async def api_scrape():
+    """Manually trigger brand website scraper."""
+    import threading
+    from core.scraper import scrape_brand_pages
+    def run():
+        scrape_brand_pages(tenant_id=TENANT)
+    threading.Thread(target=run, daemon=True).start()
+    return {"status": "started", "message": "Brand scraper running in background"}
+
+
+@app.post("/api/news")
+async def api_news():
+    """Manually trigger RSS news fetch."""
+    import threading
+    from core.rss_feed import fetch_news
+    def run():
+        fetch_news(tenant_id=TENANT)
+    threading.Thread(target=run, daemon=True).start()
+    return {"status": "started", "message": "RSS news fetch running in background"}
