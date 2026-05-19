@@ -5,11 +5,12 @@
 #  Stores: last 10 messages, customer name, car interest
 # ─────────────────────────────────────────────────────────────
 
+import os
 import sqlite3
 import json
 from datetime import datetime
 
-MEM_DB = "memory.db"
+MEM_DB = os.getenv("MEMORY_DB_PATH", "memory.db")
 
 
 def _conn():
