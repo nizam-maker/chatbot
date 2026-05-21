@@ -8,3 +8,4 @@ uploads/
 *.sqlite3
 chroma_db/
 .DS_Store
+.vscode/mcp.json
