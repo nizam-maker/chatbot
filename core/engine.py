@@ -13,88 +13,143 @@ from core.ingest import retrieve
 
 load_dotenv()
 
-_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-MODEL   = "claude-sonnet-4-20250514"
+_platform_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+MODEL_DEFAULT     = "claude-sonnet-4-20250514"
+
+
+def _get_client_and_model(tenant_cfg: dict):
+    """
+    Return the correct Anthropic client and model for this tenant.
+    If tenant has BYOK key → use theirs.
+    Otherwise → use platform key.
+    """
+    from core.supabase_client import sb
+    from core.crypto import decrypt
+
+    try:
+        slug   = tenant_cfg.get("TENANT_ID", "")
+        tenant = sb.table("tenants").select(
+            "billing_mode, ai_api_key_enc, ai_model"
+        ).eq("slug", slug).single().execute().data
+
+        if tenant and tenant.get("billing_mode") == "byok" \
+                and tenant.get("ai_api_key_enc"):
+            key    = decrypt(tenant["ai_api_key_enc"])
+            model  = tenant.get("ai_model") or MODEL_DEFAULT
+            client = anthropic.Anthropic(api_key=key)
+            return client, model
+
+    except Exception as e:
+        print(f"[engine] BYOK lookup failed, using platform key: {e}")
+
+    return _platform_client, MODEL_DEFAULT
 
 
 def _db_context(user_msg: str) -> str:
     """
-    Query the structured database based on keywords in the user message.
+    Query Supabase for cars and rebates based on message keywords.
     Returns a formatted string injected into the system prompt.
     """
     try:
-        from tenants.laman_auto.schema import (
-            search_cars, get_active_rebates, get_cars_by_brand
-        )
+        from core.supabase_client import sb
 
         msg_lower = user_msg.lower()
-        lines     = []
 
         # Detect brand mentions
         brands = {
             "perodua": "Perodua", "proton": "Proton",
-            "honda": "Honda",     "toyota": "Toyota"
+            "honda":   "Honda",   "toyota": "Toyota"
         }
+
         # Detect model mentions
         models = {
-            "axia": "Axia",   "myvi": "Myvi",   "bezza": "Bezza",
-            "saga": "Saga",   "x50": "X50",     "x70": "X70",
-            "city": "City",   "hr-v": "HR-V",   "hrv": "HR-V",
-            "vios": "Vios",   "yaris": "Yaris"
+            "axia":  "Axia",   "myvi":  "Myvi",   "bezza": "Bezza",
+            "ativa": "Ativa",  "alza":  "Alza",
+            "saga":  "Saga",   "x50":   "X50",    "x70":   "X70",
+            "s70":   "S70",
+            "city":  "City",   "hr-v":  "HR-V",   "hrv":   "HR-V",
+            "civic": "Civic",
+            "vios":  "Vios",   "yaris": "Yaris",  "veloz": "Veloz",
         }
 
         matched_brand = next(
-            (v for k, v in brands.items() if k in msg_lower), None
-        )
+            (v for k, v in brands.items() if k in msg_lower), None)
         matched_model = next(
-            (v for k, v in models.items() if k in msg_lower), None
-        )
+            (v for k, v in models.items() if k in msg_lower), None)
 
         # Price range detection
         max_price = None
-        price_keywords = {
-            "bawah 50k": 50_000,  "under 50k": 50_000,
-            "bawah 60k": 60_000,  "under 60k": 60_000,
-            "bawah 80k": 80_000,  "under 80k": 80_000,
-            "bawah 100k": 100_000,"under 100k": 100_000,
-        }
-        for kw, price in price_keywords.items():
+        for kw, price in {
+            "bawah 50k": 50000,  "under 50k": 50000,
+            "bawah 60k": 60000,  "under 60k": 60000,
+            "bawah 80k": 80000,  "under 80k": 80000,
+            "bawah 100k": 100000,"under 100k": 100000,
+            "50k": 50000, "60k": 60000,
+            "80k": 80000, "100k": 100000,
+        }.items():
             if kw in msg_lower:
                 max_price = price
                 break
 
-        # Query cars from DB
-        cars = search_cars(
-            brand     = matched_brand,
-            max_price = max_price,
-        )
+        # Skip if no relevant keywords at all
+        general_kw = ["harga", "price", "murah", "mahal", "stok",
+                      "stock", "rebat", "rebate", "promosi", "promo",
+                      "loan", "pinjaman", "spec", "spesifikasi",
+                      "kereta", "car", "beli", "buy"]
+        if not matched_brand and not matched_model and not max_price:
+            if not any(k in msg_lower for k in general_kw):
+                return ""
 
-        # If specific model mentioned, filter further
+        # ── Query Supabase ────────────────────────────────────
+        q = sb.table("cars").select("*").eq("status", "available")
+
+        if matched_brand:
+            q = q.ilike("brand", f"%{matched_brand}%")
         if matched_model:
-            cars = [c for c in cars if matched_model.lower() in c.model.lower()]
+            q = q.ilike("model", f"%{matched_model}%")
+        if max_price:
+            q = q.lte("price_otr", max_price)
 
-        if cars:
-            lines.append("[Structured database — available cars]")
-            for c in cars[:6]:  # limit to 6 results
-                rebates = get_active_rebates(c.car_id)
-                rebate_str = ""
-                if rebates:
-                    total = sum(r.amount for r in rebates)
-                    rebate_str = f" | Rebat: RM{total:,.0f}"
+        cars = q.order("price_otr").limit(8).execute().data or []
 
-                lines.append(
-                    f"• {c.brand} {c.model} {c.variant} ({c.year}) — "
-                    f"RM{c.price_otr:,.0f} OTR | "
-                    f"Stok: {c.stock} unit | "
-                    f"Warna: {c.colour} | "
-                    f"Fuel: {c.fuel_cons} km/l"
-                    f"{rebate_str}"
-                )
+        # General question — return top available cars
+        if not cars and not matched_brand and not matched_model:
+            cars = sb.table("cars").select("*")\
+                .eq("status", "available")\
+                .order("price_otr").limit(6).execute().data or []
+
+        if not cars:
+            return ""
+
+        lines = ["[Structured database — available cars]"]
+
+        for c in cars:
+            # Get active rebates for this car
+            rebates = sb.table("rebates").select("*")\
+                .eq("car_id", c["car_id"])\
+                .eq("is_active", True)\
+                .execute().data or []
+
+            rebate_str = ""
+            if rebates:
+                total      = sum(r["amount"] for r in rebates)
+                types      = ", ".join(set(r["rebate_type"] for r in rebates))
+                rebate_str = f" | Rebat: RM{total:,.0f} ({types})"
+
+            lines.append(
+                f"• {c['brand']} {c['model']} {c['variant']} ({c['year']}) — "
+                f"RM{c['price_otr']:,.0f} OTR | "
+                f"Stok: {c['stock']} unit | "
+                f"Warna: {c['colour']} | "
+                f"Fuel: {c['fuel_cons']} km/l | "
+                f"Engine: {c['engine_cc']}cc {c['transmission']}"
+                f"{rebate_str}"
+            )
 
         return "\n".join(lines)
 
     except Exception as e:
-        # DB not available — fail silently, ChromaDB still works
+        print(f"[engine] DB context error: {e}")
         return ""
 
 
@@ -131,10 +186,10 @@ def chat(
     chunks  = retrieve(user_msg, tenant_id, tenant_cfg["DOMAINS"], n=4)
     context = "\n\n".join(chunks) if chunks else ""
 
-    # 3. Query structured database for prices, stock, rebates
+    # 3. Query structured DB (Supabase) for prices, stock, rebates
     db_context = _db_context(user_msg)
 
-    # 4. Build system prompt — inject knowledge context + DB data + customer saga
+    # 4. Build system prompt — inject all context layers
     system = tenant_cfg["SYSTEM_PROMPT"]
 
     if db_context:
@@ -146,21 +201,24 @@ def chat(
     if session.get("customer_name"):
         system += f"\n\nCustomer name: {session['customer_name']}"
 
-    # 4. Build message history (last 10 turns from memory)
+    # 5. Build message history (last 10 turns from memory)
     messages = session["messages"] + [
         {"role": "user", "content": user_msg}
     ]
 
-    # 5. Call Claude
-    response = _client.messages.create(
-        model=MODEL,
-        max_tokens=1000,
-        system=system,
-        messages=messages,
+    # 6. Get correct client + model (platform or BYOK)
+    client, model = _get_client_and_model(tenant_cfg)
+
+    # 7. Call Claude
+    response = client.messages.create(
+        model      = model,
+        max_tokens = 1000,
+        system     = system,
+        messages   = messages,
     )
     reply = response.content[0].text
 
-    # 6. Update session memory
+    # 7. Update session memory
     session = add_message(session, "user",      user_msg)
     session = add_message(session, "assistant", reply)
     save_session(session)

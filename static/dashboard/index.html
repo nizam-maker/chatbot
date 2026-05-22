@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chatbot Platform — Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1a6f4a;--primary-h:#145a3c;
+  --bg:#f4f3ef;--surface:#fff;--border:#e2e0d8;
+  --text:#1c1c1a;--muted:#7a7870;
+  --success:#1D9E75;--danger:#E24B4A;--warning:#EF9F27;--info:#3B7DD8;
+  --font:"Segoe UI",system-ui,sans-serif;--mono:"Cascadia Code","Fira Mono",monospace;
+  --radius:10px;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+
+/* ── Sidebar ── */
+.sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+.sidebar-logo{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;border-radius:8px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700}
+.logo-text{font-size:14px;font-weight:600;color:var(--text)}
+.logo-sub{font-size:11px;color:var(--muted)}
+nav{padding:10px 8px;flex:1;overflow-y:auto}
+.nav-section{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:10px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;text-decoration:none;margin-bottom:1px}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:#e8f4ee;color:var(--primary);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+.tenant-badge{display:inline-flex;align-items:center;gap:5px;background:#e8f4ee;color:var(--primary);padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500;margin-top:4px}
+.dot-live{width:6px;height:6px;border-radius:50%;background:var(--success);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px}
+.topbar h1{font-size:16px;font-weight:600}
+.topbar p{font-size:13px;color:var(--muted)}
+.topbar-actions{margin-left:auto;display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;background:transparent;color:var(--text);cursor:pointer;transition:all .15s;text-decoration:none}
+.btn:hover{background:var(--bg)}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-h)}
+.content{flex:1;overflow-y:auto;padding:24px}
+
+/* ── Stats grid ── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.stat-label{font-size:12px;color:var(--muted);margin-bottom:6px}
+.stat-val{font-size:24px;font-weight:600;color:var(--text)}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.stat-card.green .stat-val{color:var(--success)}
+.stat-card.amber .stat-val{color:var(--warning)}
+.stat-card.red   .stat-val{color:var(--danger)}
+
+/* ── Grid layout ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.card-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:500}
+.card-body{padding:14px 16px}
+.card-link{font-size:12px;color:var(--primary);text-decoration:none}
+.card-link:hover{text-decoration:underline}
+
+/* ── Activity list ── */
+.activity-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.activity-item:last-child{border-bottom:none}
+.activity-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.activity-text{flex:1;color:var(--text);line-height:1.4}
+.activity-time{font-size:11px;color:var(--muted);flex-shrink:0}
+
+/* ── Status badges ── */
+.badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;border:1px solid}
+.badge-ok{background:#e8f4ee;color:var(--success);border-color:#5dcaa5}
+.badge-fail{background:#fce8e8;color:var(--danger);border-color:#f08080}
+.badge-warn{background:#faeeda;color:var(--warning);border-color:#efb347}
+.badge-info{background:#e8effe;color:var(--info);border-color:#8aabec}
+
+/* ── Quick actions ── */
+.quick-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.qa-btn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);cursor:pointer;transition:all .15s;text-decoration:none;color:var(--text)}
+.qa-btn:hover{border-color:var(--primary);background:#f0faf5}
+.qa-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.qa-label{font-size:12px;font-weight:500;text-align:center}
+
+/* ── ETL status ── */
+.etl-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.etl-row:last-child{border-bottom:none}
+.etl-name{flex:1;color:var(--text)}
+.etl-next{font-size:11px;color:var(--muted)}
+
+@media(max-width:800px){.grid2{grid-template-columns:1fr}.sidebar{display:none}}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">CP</div>
+    <div>
+      <div class="logo-text">ChatPlatform</div>
+      <div class="logo-sub">Management dashboard</div>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <a href="/dashboard/" class="nav-item active">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <div class="nav-section">Knowledge</div>
+    <a href="/dashboard/files" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      File manager
+    </a>
+    <a href="/dashboard/scraper" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+      Scraper manager
+    </a>
+    <div class="nav-section">Chat</div>
+    <a href="/dashboard/tester" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Chat tester
+    </a>
+    <a href="/" class="nav-item" target="_blank">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Live chatbot
+    </a>
+    <div class="nav-section">Platform</div>
+    <a href="/dashboard/tenants" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Tenants
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div>Signed in as</div>
+    <div style="font-weight:500;margin-top:2px">Admin</div>
+    <div class="tenant-badge"><div class="dot-live"></div>Laman Auto</div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1>Dashboard</h1>
+      <p>Laman Auto — chatbot platform overview</p>
+    </div>
+    <div class="topbar-actions">
+      <a href="/dashboard/tester" class="btn">Test chatbot</a>
+      <a href="/" target="_blank" class="btn btn-primary">Open live bot ↗</a>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Stats -->
+    <div class="stats" id="stats">
+      <div class="stat-card green">
+        <div class="stat-label">Total cars</div>
+        <div class="stat-val" id="s-cars">—</div>
+        <div class="stat-sub">in database</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active documents</div>
+        <div class="stat-val" id="s-docs">—</div>
+        <div class="stat-sub">in knowledge base</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Scraper URLs</div>
+        <div class="stat-val" id="s-urls">—</div>
+        <div class="stat-sub">configured</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active rebates</div>
+        <div class="stat-val" id="s-rebates">—</div>
+        <div class="stat-sub">this month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Chat sessions</div>
+        <div class="stat-val" id="s-sessions">—</div>
+        <div class="stat-sub">all time</div>
+      </div>
+    </div>
+
+    <div class="grid2">
+
+      <!-- Quick actions -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Quick actions</span>
+        </div>
+        <div class="card-body">
+          <div class="quick-actions">
+            <a href="/dashboard/files" class="qa-btn">
+              <div class="qa-icon" style="background:#e8f4ee">
+                <svg width="18" height="18" fill="none" stroke="#1a6f4a" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              </div>
+              <span class="qa-label">Upload document</span>
+            </a>
+            <a href="/dashboard/scraper" class="qa-btn">
+              <div class="qa-icon" style="background:#faeeda">
+                <svg width="18" height="18" fill="none" stroke="#EF9F27" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20"/></svg>
+              </div>
+              <span class="qa-label">Run scraper</span>
+            </a>
+            <a href="/dashboard/tester" class="qa-btn">
+              <div class="qa-icon" style="background:#e8effe">
+                <svg width="18" height="18" fill="none" stroke="#3B7DD8" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              </div>
+              <span class="qa-label">Test chatbot</span>
+            </a>
+            <a href="/dashboard/scraper#add" class="qa-btn">
+              <div class="qa-icon" style="background:#fce8e8">
+                <svg width="18" height="18" fill="none" stroke="#E24B4A" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </div>
+              <span class="qa-label">Add URL</span>
+            </a>
+            <a href="/dashboard/tenants" class="qa-btn">
+              <div class="qa-icon" style="background:#eeedfe">
+                <svg width="18" height="18" fill="none" stroke="#534AB7" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              </div>
+              <span class="qa-label">Manage tenants</span>
+            </a>
+            <a href="/api/health" target="_blank" class="qa-btn">
+              <div class="qa-icon" style="background:#e8f4ee">
+                <svg width="18" height="18" fill="none" stroke="#1a6f4a" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </div>
+              <span class="qa-label">Health check</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ETL status -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">ETL scheduler</span>
+          <a href="/api/etl/status" target="_blank" class="card-link">view full status</a>
+        </div>
+        <div class="card-body" id="etl-status">
+          <div style="font-size:13px;color:var(--muted)">Loading...</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Recent activity -->
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">Recent scraper activity</span>
+        <a href="/dashboard/scraper" class="card-link">view all →</a>
+      </div>
+      <div class="card-body" id="activity">
+        <div style="font-size:13px;color:var(--muted)">Loading...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+async function loadStats() {
+  try {
+    // Load stats from API
+    const [health, etl] = await Promise.all([
+      fetch("/api/health").then(r=>r.json()),
+      fetch("/api/etl/status").then(r=>r.json()),
+    ]);
+
+    // Load Supabase stats
+    const stats = await fetch("/api/dashboard/stats").then(r=>r.json());
+    document.getElementById("s-cars").textContent     = stats.cars     ?? "—";
+    document.getElementById("s-docs").textContent     = stats.docs     ?? "—";
+    document.getElementById("s-urls").textContent     = stats.urls     ?? "—";
+    document.getElementById("s-rebates").textContent  = stats.rebates  ?? "—";
+    document.getElementById("s-sessions").textContent = stats.sessions ?? "—";
+
+    // ETL status
+    const etlEl = document.getElementById("etl-status");
+    if (etl.jobs) {
+      const scraper = etl.jobs.brand_scraper;
+      const news    = etl.jobs.rss_news;
+      etlEl.innerHTML = `
+        <div class="etl-row">
+          <span class="etl-name">Brand scraper</span>
+          <span class="etl-next">${scraper.next_run ? "Next: " + new Date(scraper.next_run).toLocaleDateString() : "—"}</span>
+          <span class="badge ${scraper.last_result ? "badge-ok" : "badge-warn"}">${scraper.last_result ? "last run ok" : "pending"}</span>
+        </div>
+        <div class="etl-row">
+          <span class="etl-name">RSS news feed</span>
+          <span class="etl-next">${news.next_run ? "Next: " + new Date(news.next_run).toLocaleDateString() : "—"}</span>
+          <span class="badge ${news.last_result ? "badge-ok" : "badge-warn"}">${news.last_result ? "last run ok" : "pending"}</span>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:6px">
+          <button onclick="triggerScrape()" class="btn" style="font-size:12px;padding:5px 10px">Run scraper now</button>
+          <button onclick="triggerNews()" class="btn" style="font-size:12px;padding:5px 10px">Fetch news now</button>
+        </div>`;
+    }
+
+    // Activity from scraper URLs
+    const activity = await fetch("/api/dashboard/activity").then(r=>r.json());
+    const actEl = document.getElementById("activity");
+    if (activity.length) {
+      actEl.innerHTML = activity.map(a => {
+        const status  = a.last_status || "pending";
+        const dotColor = status==="ok" ? "var(--success)" : status==="fail" ? "var(--danger)" : "var(--warning)";
+        const badgeClass = status==="ok" ? "badge-ok" : status==="fail" ? "badge-fail" : "badge-warn";
+        return `
+        <div class="activity-item">
+          <div class="activity-dot" style="background:${dotColor}"></div>
+          <div class="activity-text">${a.brand} ${a.model} &mdash; ${a.url}</div>
+          <span class="badge ${badgeClass}">${status}</span>
+          <div class="activity-time">${a.last_scraped ? new Date(a.last_scraped).toLocaleDateString() : "never"}</div>
+        </div>`}).join("");
+    } else {
+      actEl.innerHTML = '<div style="font-size:13px;color:var(--muted)">No scraper activity yet</div>';
+    }
+
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+async function triggerScrape() {
+  await fetch("/api/scrape", {method:"POST"});
+  alert("Scraper started — check back in a minute");
+}
+
+async function triggerNews() {
+  await fetch("/api/news", {method:"POST"});
+  alert("News fetch started — check back in a minute");
+}
+
+loadStats();
+</script>
+<script src="/static/dashboard/auth.js"></script>
+</body>
+</html>
