@@ -96,7 +96,7 @@ async def root():
 
 @app.get("/chat", response_class=HTMLResponse)
 async def chat_ui():
-    html_path = "static/index.html"
+    html_path = "static/chat.html"
     if os.path.exists(html_path):
         with open(html_path, encoding="utf-8") as f:
             return HTMLResponse(content=f.read(),
@@ -592,19 +592,34 @@ async def get_embed_script(slug: str):
 async def widget_js(tenant: str = "", key: str = ""):
     base_url = os.getenv("BASE_URL", "http://localhost:8000")
     js = f"""(function(){{
-  var t=document.currentScript.dataset.tenant||'{tenant}';
-  var k=document.currentScript.dataset.key||'{key}';
-  var i=document.createElement('iframe');
-  i.src='{base_url}/embed/'+t+'?key='+k;
-  i.style.cssText='position:fixed;bottom:20px;right:20px;width:370px;height:580px;border:none;z-index:99999;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.15)';
-  document.body.appendChild(i);
+  var t = document.currentScript.dataset.tenant || '{tenant}';
+  var k = document.currentScript.dataset.key    || '{key}';
+  var b = '{base_url}';
+
+  var iframe = document.createElement('iframe');
+  iframe.src = b + '/embed/' + t + '?key=' + k + '&tenant=' + t;
+  iframe.id  = 'chatplatform-widget';
+  iframe.style.cssText = [
+    'position:fixed',
+    'bottom:0',
+    'right:0',
+    'width:420px',
+    'height:600px',
+    'border:none',
+    'z-index:2147483647',
+    'background:transparent',
+    'pointer-events:all'
+  ].join(';');
+  iframe.setAttribute('allow', 'microphone');
+  iframe.setAttribute('title', 'Chat widget');
+  document.body.appendChild(iframe);
 }})();"""
     return Response(content=js, media_type="application/javascript")
 
 
 @app.get("/embed/{slug}", response_class=HTMLResponse)
 async def embed_chat(slug: str, key: str = ""):
-    html_path = "static/index.html"
+    html_path = "static/embed.html"
     if os.path.exists(html_path):
         with open(html_path, encoding="utf-8") as f:
             return HTMLResponse(content=f.read(), media_type="text/html; charset=utf-8")

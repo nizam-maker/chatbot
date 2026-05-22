@@ -1,0 +1,14 @@
+{
+  "name": "@chatplatform/widget",
+  "version": "1.0.0",
+  "description": "Embeddable chat widget for ChatPlatform",
+  "main": "index.js",
+  "module": "index.esm.js",
+  "files": ["index.js", "index.esm.js", "README.md"],
+  "keywords": ["chatbot", "widget", "embed", "claude", "ai"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nizam-maker/chatbot"
+  }
+}

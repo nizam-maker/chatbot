@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chatbot</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1a6f4a;--primary-h:#145a3c;
+  --bg:#f4f3ef;--surface:#fff;--border:#e2e0d8;
+  --user-bg:#1a6f4a;--user-txt:#fff;
+  --bot-bg:#fff;--bot-txt:#1c1c1a;
+  --muted:#7a7870;--tag-bg:#e8f4ee;
+  --font:"Segoe UI",system-ui,sans-serif;--radius:12px;
+}
+body{font-family:var(--font);background:var(--bg);
+     height:100vh;display:flex;flex-direction:column;align-items:center}
+
+header{width:100%;background:var(--primary);color:#fff;
+       padding:14px 24px;display:flex;align-items:center;gap:12px;
+       box-shadow:0 2px 8px rgba(0,0,0,.12);position:sticky;top:0;z-index:10}
+.logo{width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      font-size:16px;font-weight:700}
+header h1{font-size:16px;font-weight:600}
+header p{font-size:12px;opacity:.75}
+.status-dot{width:8px;height:8px;background:#5ddf8a;border-radius:50%;
+            margin-left:auto;box-shadow:0 0 0 3px rgba(93,223,138,.25);
+            animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.layout{display:flex;width:100%;max-width:800px;
+        height:calc(100vh - 66px);flex-direction:column}
+
+#messages{flex:1;overflow-y:auto;padding:20px 24px;
+          display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth}
+#messages::-webkit-scrollbar{width:4px}
+#messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.bubble-row{display:flex;gap:9px;align-items:flex-end;max-width:82%}
+.bubble-row.user{align-self:flex-end;flex-direction:row-reverse}
+.bubble-row.bot{align-self:flex-start}
+.avatar{width:28px;height:28px;border-radius:50%;display:flex;
+        align-items:center;justify-content:center;
+        font-size:11px;font-weight:700;flex-shrink:0}
+.av-bot{background:var(--primary);color:#fff}
+.av-user{background:#d4edde;color:var(--primary)}
+.bubble{padding:10px 14px;border-radius:var(--radius);
+        font-size:14px;line-height:1.55;word-break:break-word}
+.bubble.bot{background:var(--bot-bg);color:var(--bot-txt);
+            border-bottom-left-radius:4px;
+            box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.bubble.user{background:var(--user-bg);color:var(--user-txt);
+             border-bottom-right-radius:4px}
+.bubble time{display:block;font-size:10px;opacity:.5;
+             margin-top:5px;text-align:right}
+
+.typing{display:none;align-self:flex-start}
+.typing.show{display:flex}
+.dots{display:flex;gap:4px;padding:4px 0}
+.dots span{width:7px;height:7px;border-radius:50%;background:var(--muted);
+           animation:bounce .9s ease-in-out infinite}
+.dots span:nth-child(2){animation-delay:.15s}
+.dots span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-7px)}}
+
+.quick-replies{display:flex;flex-wrap:wrap;gap:6px;padding:0 24px 10px}
+.qr{padding:6px 13px;border-radius:20px;border:1.5px solid var(--primary);
+    background:transparent;color:var(--primary);font-size:12px;
+    cursor:pointer;transition:background .15s}
+.qr:hover{background:var(--tag-bg)}
+
+.input-bar{padding:12px 24px;background:var(--surface);
+           border-top:1px solid var(--border);
+           display:flex;gap:10px;align-items:flex-end}
+#msg-input{flex:1;padding:10px 14px;border:1.5px solid var(--border);
+           border-radius:22px;font-size:14px;font-family:var(--font);
+           resize:none;outline:none;max-height:120px;
+           background:var(--bg);line-height:1.4;transition:border-color .2s}
+#msg-input:focus{border-color:var(--primary)}
+#send-btn{width:40px;height:40px;border:none;border-radius:50%;
+          background:var(--primary);color:#fff;
+          display:flex;align-items:center;justify-content:center;
+          cursor:pointer;flex-shrink:0;transition:background .15s,transform .1s}
+#send-btn:hover{background:var(--primary-h)}
+#send-btn:active{transform:scale(.93)}
+
+@media(max-width:600px){
+  .layout{max-width:100%}
+  #messages{padding:14px 16px}
+  .input-bar{padding:10px 16px}
+  .quick-replies{padding:0 16px 8px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo" id="logo">AI</div>
+  <div>
+    <h1 id="bot-name">Loading...</h1>
+    <p>Powered by Claude AI</p>
+  </div>
+  <div class="status-dot"></div>
+</header>
+
+<div class="layout">
+  <div id="messages"></div>
+
+  <div class="bubble-row bot typing" id="typing">
+    <div class="avatar av-bot" id="typing-avatar">AI</div>
+    <div class="bubble bot">
+      <div class="dots"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+
+  <div class="quick-replies" id="quick-replies"></div>
+
+  <div class="input-bar">
+    <textarea id="msg-input" rows="1"
+      placeholder="Type your message..."
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}"
+      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'">
+    </textarea>
+    <button id="send-btn" onclick="send()" aria-label="Send">
+      <svg width="17" height="17" fill="none" stroke="currentColor"
+           stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+           viewBox="0 0 24 24">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script>
+let sessionId = crypto.randomUUID();
+let initials  = "AI";
+
+// ── Load tenant config ────────────────────────────────────────
+async function loadConfig() {
+  try {
+    const cfg = await fetch("/api/config").then(r => r.json());
+    initials  = cfg.brand_initials || "AI";
+
+    document.title                                      = cfg.bot_name || "Chatbot";
+    document.getElementById("bot-name").textContent    = cfg.bot_name || "Assistant";
+    document.getElementById("logo").textContent        = initials;
+    document.getElementById("typing-avatar").textContent = initials;
+
+    if (cfg.brand_color) {
+      document.documentElement.style.setProperty("--primary",  cfg.brand_color);
+      document.documentElement.style.setProperty("--user-bg",  cfg.brand_color);
+      document.documentElement.style.setProperty("--primary-h",
+        cfg.brand_color + "dd");
+    }
+
+    // Quick replies
+    const qr = document.getElementById("quick-replies");
+    (cfg.quick_replies || []).forEach(q => {
+      const b       = document.createElement("button");
+      b.className   = "qr";
+      b.textContent = q;
+      b.onclick     = () => quickSend(q);
+      qr.appendChild(b);
+    });
+
+    addBubble(
+      (cfg.welcome_msg || "Hello! How can I help?").replace(/\n/g, "<br>"),
+      "bot", true
+    );
+  } catch(e) {
+    addBubble("Unable to connect. Please refresh.", "bot", true);
+  }
+}
+
+// ── Chat ──────────────────────────────────────────────────────
+function now() {
+  return new Date().toLocaleTimeString("en-MY",
+    {hour:"2-digit", minute:"2-digit"});
+}
+
+function esc(t) {
+  return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function addBubble(text, role, isHtml = false) {
+  const msgs = document.getElementById("messages");
+  const row  = document.createElement("div");
+  row.className = `bubble-row ${role}`;
+
+  const av       = document.createElement("div");
+  av.className   = `avatar av-${role}`;
+  av.textContent = role === "bot" ? initials : "U";
+
+  const b       = document.createElement("div");
+  b.className   = `bubble ${role}`;
+  b.innerHTML   = (isHtml ? text : esc(text).replace(/\n/g,"<br>"))
+                + `<time>${now()}</time>`;
+
+  row.append(av, b);
+  msgs.appendChild(row);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping(show) {
+  document.getElementById("typing").classList.toggle("show", show);
+  const msgs = document.getElementById("messages");
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+async function send() {
+  const inp = document.getElementById("msg-input");
+  const msg = inp.value.trim();
+  if (!msg) return;
+
+  inp.value = "";
+  inp.style.height = "auto";
+  addBubble(msg, "user");
+  showTyping(true);
+
+  try {
+    const res  = await fetch("/api/chat", {
+      method:  "POST",
+      headers: {"Content-Type":"application/json"},
+      body:    JSON.stringify({
+        message:     msg,
+        session_id:  sessionId,
+        customer_id: "web-visitor"
+      })
+    });
+    const data = await res.json();
+    showTyping(false);
+    if (data.error) { addBubble("⚠️ " + data.error, "bot"); return; }
+    addBubble(data.reply, "bot");
+    sessionId = data.session_id;
+  } catch(e) {
+    showTyping(false);
+    addBubble("⚠️ Connection error. Please try again.", "bot");
+  }
+}
+
+function quickSend(text) {
+  document.getElementById("msg-input").value = text;
+  send();
+}
+
+loadConfig();
+</script>
+</body>
+</html>
