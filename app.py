@@ -90,12 +90,18 @@ if os.path.exists("static"):
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/dashboard")
+
+
+@app.get("/chat", response_class=HTMLResponse)
+async def chat_ui():
     html_path = "static/index.html"
     if os.path.exists(html_path):
         with open(html_path, encoding="utf-8") as f:
             return HTMLResponse(content=f.read(),
                                 media_type="text/html; charset=utf-8")
-    return HTMLResponse("<h2>Add static/index.html to see the chat UI.</h2>")
+    return HTMLResponse("<h2>Chat UI not found</h2>")
 
 
 # ── Dashboard pages ───────────────────────────────────────────

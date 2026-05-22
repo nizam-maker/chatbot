@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Tenants — ChatPlatform</title>
+<title>Tenants â€” ChatPlatform</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -139,7 +139,7 @@ nav{padding:10px 8px;flex:1}
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
       Chat tester
     </a>
-    <a href="/" class="nav-item" target="_blank">
+    <a href="/chat" class="nav-item" target="_blank">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
       Live chatbot
     </a>
@@ -252,7 +252,7 @@ nav{padding:10px 8px;flex:1}
             <div class="section-label">Current billing mode</div>
             <div class="byok-mode platform" id="billing-mode-badge">
               <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-              <span id="billing-mode-text">Platform billing — using shared API key</span>
+              <span id="billing-mode-text">Platform billing â€” using shared API key</span>
             </div>
 
             <div class="byok-card">
@@ -286,7 +286,7 @@ nav{padding:10px 8px;flex:1}
                 Tenant provides their own Anthropic API key. API costs are billed directly to their Anthropic account.
               </div>
               <div class="key-display" id="byok-display" style="display:none">
-                <span id="byok-masked">••••••••</span>
+                <span id="byok-masked">â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢</span>
                 <button class="btn btn-sm btn-danger" onclick="removeBYOK()">Remove</button>
               </div>
               <div id="byok-form">
@@ -384,8 +384,8 @@ async function selectTenant(slug) {
   const badge  = document.getElementById("billing-mode-badge");
   badge.className = "byok-mode " + (isByok ? "byok" : "platform");
   document.getElementById("billing-mode-text").textContent = isByok
-    ? "BYOK — tenant using their own API key"
-    : "Platform billing — using shared API key";
+    ? "BYOK â€” tenant using their own API key"
+    : "Platform billing â€” using shared API key";
   document.getElementById("ai-provider").value = activeTenant.ai_provider || "anthropic";
   document.getElementById("ai-model").value    = activeTenant.ai_model || "claude-sonnet-4-20250514";
 
@@ -423,7 +423,7 @@ async function saveBranding() {
   });
   const data = await res.json();
   showAlert("branding", data.status === "ok" ? "ok" : "err",
-    data.status === "ok" ? "Changes saved ✓" : "Save failed");
+    data.status === "ok" ? "Changes saved âœ“" : "Save failed");
   await loadTenants();
 }
 
@@ -436,7 +436,7 @@ async function saveAISettings() {
       ai_model:    document.getElementById("ai-model").value,
     })
   });
-  showAlert("billing", "ok", "AI settings saved ✓");
+  showAlert("billing", "ok", "AI settings saved âœ“");
 }
 
 async function saveBYOK() {
@@ -449,7 +449,7 @@ async function saveBYOK() {
   });
   const data = await res.json();
   if (data.status === "ok") {
-    showAlert("billing", "ok", `BYOK enabled ✓ — key saved as ${data.masked}`);
+    showAlert("billing", "ok", `BYOK enabled âœ“ â€” key saved as ${data.masked}`);
     document.getElementById("byok-input").value = "";
     await selectTenant(activeTenant.slug);
     await loadTenants();
@@ -461,7 +461,7 @@ async function saveBYOK() {
 async function removeBYOK() {
   if (!confirm("Remove BYOK key? Billing will revert to platform key.")) return;
   await fetch(`/api/tenants/${activeTenant.slug}/api-key`, {method:"DELETE"});
-  showAlert("billing", "ok", "BYOK removed — reverted to platform billing");
+  showAlert("billing", "ok", "BYOK removed â€” reverted to platform billing");
   await selectTenant(activeTenant.slug);
   await loadTenants();
 }
