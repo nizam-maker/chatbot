@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>File Manager — ChatPlatform</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1a6f4a;--primary-h:#145a3c;
+  --bg:#f4f3ef;--surface:#fff;--border:#e2e0d8;
+  --text:#1c1c1a;--muted:#7a7870;
+  --success:#1D9E75;--danger:#E24B4A;--warning:#EF9F27;--info:#3B7DD8;
+  --font:"Segoe UI",system-ui,sans-serif;--radius:10px;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+.sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+.sidebar-logo{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;border-radius:8px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700}
+.logo-text{font-size:14px;font-weight:600}.logo-sub{font-size:11px;color:var(--muted)}
+nav{padding:10px 8px;flex:1}
+.nav-section{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:10px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;text-decoration:none;margin-bottom:1px}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:#e8f4ee;color:var(--primary);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+.tenant-badge{display:inline-flex;align-items:center;gap:5px;background:#e8f4ee;color:var(--primary);padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500;margin-top:4px}
+.dot-live{width:6px;height:6px;border-radius:50%;background:var(--success);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px}
+.topbar h1{font-size:16px;font-weight:600}.topbar p{font-size:13px;color:var(--muted)}
+.topbar-actions{margin-left:auto;display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;background:transparent;color:var(--text);cursor:pointer;transition:all .15s;text-decoration:none}
+.btn:hover{background:var(--bg)}.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-h)}
+.btn-danger{color:var(--danger);border-color:var(--danger)}
+.btn-danger:hover{background:#fce8e8}
+.btn-sm{padding:4px 8px;font-size:12px}
+.content{flex:1;overflow-y:auto;padding:24px}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.stat-label{font-size:12px;color:var(--muted);margin-bottom:4px}
+.stat-val{font-size:22px;font-weight:600}
+.stat-val.green{color:var(--success)}
+
+/* Upload zone */
+.upload-zone{background:var(--surface);border:2px dashed var(--border);border-radius:var(--radius);padding:28px;text-align:center;margin-bottom:16px;cursor:pointer;transition:all .2s;position:relative}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--primary);background:#f0faf5}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{width:40px;height:40px;border-radius:10px;background:#e8f4ee;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.upload-title{font-size:14px;font-weight:500;margin-bottom:4px}
+.upload-sub{font-size:12px;color:var(--muted)}
+
+/* Upload config */
+.upload-config{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:3px}
+.field label{font-size:11px;color:var(--muted);font-weight:500}
+.field select,.field input{padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--bg);color:var(--text);outline:none}
+.field select:focus,.field input:focus{border-color:var(--primary)}
+
+/* Progress */
+.upload-progress{display:none;margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.progress-bar{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;background:var(--primary);border-radius:3px;transition:width .3s;width:0%}
+
+/* Table */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.table-toolbar{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.table-toolbar input{flex:1;min-width:160px;padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--bg);color:var(--text);outline:none}
+.table-toolbar input:focus{border-color:var(--primary)}
+.table-toolbar select{padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--bg);color:var(--text);outline:none}
+table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+th{text-align:left;padding:8px 12px;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--border);background:var(--bg)}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf9}
+
+/* Domain badges */
+.d-badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px}
+.d-car{background:#e8f4ee;color:#085041}
+.d-rebate{background:#faeeda;color:#633806}
+.d-faq{background:#eeedfe;color:#3C3489}
+.d-news{background:#fce8e8;color:#712B13}
+
+/* Toggle */
+.toggle{position:relative;width:30px;height:17px;display:inline-block}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.slider{position:absolute;inset:0;border-radius:9px;background:var(--border);cursor:pointer;transition:background .2s}
+.slider:before{content:'';position:absolute;width:11px;height:11px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .2s}
+.toggle input:checked+.slider{background:var(--success)}
+.toggle input:checked+.slider:before{transform:translateX(13px)}
+
+.empty-state{padding:40px;text-align:center;color:var(--muted);font-size:13px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">CP</div>
+    <div><div class="logo-text">ChatPlatform</div><div class="logo-sub">Management dashboard</div></div>
+  </div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <a href="/dashboard" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <div class="nav-section">Knowledge</div>
+    <a href="/dashboard/files" class="nav-item active">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      File manager
+    </a>
+    <a href="/dashboard/scraper" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+      Scraper manager
+    </a>
+    <div class="nav-section">Chat</div>
+    <a href="/dashboard/tester" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Chat tester
+    </a>
+    <a href="/" class="nav-item" target="_blank">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Live chatbot
+    </a>
+    <div class="nav-section">Platform</div>
+    <a href="/dashboard/tenants" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Tenants
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div>Signed in as</div>
+    <div style="font-weight:500;margin-top:2px">Admin</div>
+    <div class="tenant-badge"><div class="dot-live"></div>Laman Auto</div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1>File manager</h1>
+      <p>Upload and manage knowledge base documents</p>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn" onclick="loadFiles()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Total files</div>
+        <div class="stat-val" id="s-total">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active</div>
+        <div class="stat-val green" id="s-active">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active chunks</div>
+        <div class="stat-val" id="s-chunks">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total size</div>
+        <div class="stat-val" id="s-size">—</div>
+      </div>
+    </div>
+
+    <!-- Upload zone -->
+    <div class="upload-zone" id="drop-zone"
+         ondragover="event.preventDefault();this.classList.add('drag')"
+         ondragleave="this.classList.remove('drag')"
+         ondrop="handleDrop(event)">
+      <input type="file" id="file-input" accept=".pdf,.txt,.csv"
+             onchange="handleFileSelect(this.files)" multiple/>
+      <div class="upload-icon">
+        <svg width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <div class="upload-title">Drop files here or click to browse</div>
+      <div class="upload-sub">Supports PDF, TXT, CSV &mdash; max 50MB per file</div>
+    </div>
+
+    <!-- Upload config -->
+    <div class="upload-config" id="upload-config" style="display:none">
+      <div class="field">
+        <label>Selected file</label>
+        <input type="text" id="f-filename" readonly style="width:220px;color:var(--muted)"/>
+      </div>
+      <div class="field">
+        <label>Knowledge domain</label>
+        <select id="f-domain">
+          <option value="car_specs">car_specs</option>
+          <option value="rebates_promos">rebates_promos</option>
+          <option value="faq_support">faq_support</option>
+          <option value="surat_khabar">surat_khabar</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Brand (optional)</label>
+        <input type="text" id="f-brand" placeholder="e.g. Proton" style="width:120px"/>
+      </div>
+      <div class="field">
+        <label>Model (optional)</label>
+        <input type="text" id="f-model" placeholder="e.g. Saga" style="width:120px"/>
+      </div>
+      <button class="btn btn-primary" onclick="uploadFile()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload &amp; ingest
+      </button>
+      <button class="btn" onclick="cancelUpload()">Cancel</button>
+    </div>
+
+    <!-- Progress -->
+    <div class="upload-progress" id="upload-progress">
+      <div style="font-size:13px;font-weight:500" id="progress-label">Uploading...</div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <input type="text" id="search"
+               placeholder="Search by filename..."
+               oninput="renderTable()"/>
+        <select id="filter-domain" onchange="renderTable()">
+          <option value="">All domains</option>
+          <option value="car_specs">car_specs</option>
+          <option value="rebates_promos">rebates_promos</option>
+          <option value="faq_support">faq_support</option>
+          <option value="surat_khabar">surat_khabar</option>
+        </select>
+        <select id="filter-status" onchange="renderTable()">
+          <option value="">All status</option>
+          <option value="1">Active</option>
+          <option value="0">Disabled</option>
+        </select>
+        <span style="font-size:12px;color:var(--muted)" id="row-count"></span>
+      </div>
+      <table>
+        <colgroup>
+          <col style="width:30%"><col style="width:16%"><col style="width:8%">
+          <col style="width:8%"><col style="width:10%"><col style="width:13%">
+          <col style="width:8%"><col style="width:7%">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>File name</th><th>Domain</th><th>Type</th>
+            <th>Chunks</th><th>Size</th><th>Uploaded</th>
+            <th>Active</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="8" class="empty-state">
+            <span class="spinner"></span> Loading...
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let allFiles   = [];
+let pendingFile = null;
+
+const domainClass = {
+  car_specs:      "d-car",
+  rebates_promos: "d-rebate",
+  faq_support:    "d-faq",
+  surat_khabar:   "d-news",
+};
+
+function fmtSize(bytes) {
+  if (!bytes) return "—";
+  if (bytes < 1024)       return bytes + " B";
+  if (bytes < 1024*1024)  return (bytes/1024).toFixed(1) + " KB";
+  return (bytes/1024/1024).toFixed(1) + " MB";
+}
+
+function fmtDate(ts) {
+  if (!ts) return "—";
+  return new Date(ts).toLocaleDateString("en-MY");
+}
+
+async function loadFiles() {
+  const res  = await fetch("/api/files");
+  allFiles   = await res.json();
+  renderTable();
+}
+
+function renderTable() {
+  const q  = document.getElementById("search").value.toLowerCase();
+  const fd = document.getElementById("filter-domain").value;
+  const fs = document.getElementById("filter-status").value;
+
+  let rows = allFiles.filter(f => {
+    if (q  && !f.file_name.toLowerCase().includes(q)) return false;
+    if (fd && f.domain !== fd)       return false;
+    if (fs === "1" && !f.is_enabled) return false;
+    if (fs === "0" &&  f.is_enabled) return false;
+    return true;
+  });
+
+  document.getElementById("row-count").textContent =
+    `${rows.length} of ${allFiles.length} files`;
+
+  // Stats
+  const active   = allFiles.filter(f => f.is_enabled);
+  const chunks   = active.reduce((a, f) => a + (f.chunk_count || 0), 0);
+  const totalSize= allFiles.reduce((a, f) => a + (f.file_size  || 0), 0);
+  document.getElementById("s-total").textContent  = allFiles.length;
+  document.getElementById("s-active").textContent = active.length;
+  document.getElementById("s-chunks").textContent = chunks;
+  document.getElementById("s-size").textContent   = fmtSize(totalSize);
+
+  const tbody = document.getElementById("tbody");
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-state">
+      No files yet — upload a PDF to get started</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(f => `
+    <tr>
+      <td style="font-weight:500" title="${f.file_name}">
+        <svg width="13" height="13" fill="none" stroke="var(--muted)"
+             stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px;margin-right:5px">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>${f.file_name}
+      </td>
+      <td><span class="d-badge ${domainClass[f.domain]||"d-car"}">${f.domain}</span></td>
+      <td style="text-transform:uppercase;font-size:12px;color:var(--muted)">${f.file_type||"pdf"}</td>
+      <td style="font-size:13px">${f.chunk_count || "—"}</td>
+      <td style="font-size:12px;color:var(--muted)">${fmtSize(f.file_size)}</td>
+      <td style="font-size:12px;color:var(--muted)">${fmtDate(f.created_at)}</td>
+      <td>
+        <label class="toggle" aria-label="Enable ${f.file_name}">
+          <input type="checkbox" ${f.is_enabled ? "checked" : ""}
+            onchange="toggleFile('${f.id}', this.checked)">
+          <span class="slider"></span>
+        </label>
+      </td>
+      <td>
+        <button class="btn btn-sm btn-danger" title="Delete file"
+          onclick="deleteFile('${f.id}', '${f.file_name}')">
+          <svg width="12" height="12" fill="none" stroke="currentColor"
+               stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+          </svg>
+        </button>
+      </td>
+    </tr>`).join("");
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById("drop-zone").classList.remove("drag");
+  const files = e.dataTransfer.files;
+  if (files.length) showUploadConfig(files[0]);
+}
+
+function handleFileSelect(files) {
+  if (files.length) showUploadConfig(files[0]);
+}
+
+function showUploadConfig(file) {
+  pendingFile = file;
+  document.getElementById("f-filename").value = file.name;
+  document.getElementById("upload-config").style.display = "flex";
+  document.getElementById("upload-progress").style.display = "none";
+}
+
+function cancelUpload() {
+  pendingFile = null;
+  document.getElementById("upload-config").style.display = "none";
+  document.getElementById("file-input").value = "";
+}
+
+async function uploadFile() {
+  if (!pendingFile) return;
+
+  const domain = document.getElementById("f-domain").value;
+  const brand  = document.getElementById("f-brand").value;
+  const model  = document.getElementById("f-model").value;
+
+  // Show progress
+  document.getElementById("upload-config").style.display = "none";
+  const prog = document.getElementById("upload-progress");
+  const fill = document.getElementById("progress-fill");
+  const lbl  = document.getElementById("progress-label");
+  prog.style.display = "block";
+
+  // Animate progress
+  lbl.textContent = `Uploading ${pendingFile.name}...`;
+  fill.style.width = "30%";
+  setTimeout(() => { fill.style.width = "60%"; lbl.textContent = "Ingesting into knowledge base..."; }, 800);
+  setTimeout(() => { fill.style.width = "85%"; lbl.textContent = "Creating embeddings..."; }, 2000);
+
+  const fd = new FormData();
+  fd.append("file",   pendingFile);
+  fd.append("domain", domain);
+  fd.append("brand",  brand);
+  fd.append("model",  model);
+
+  try {
+    const res  = await fetch("/api/files/upload", {method:"POST", body:fd});
+    const data = await res.json();
+
+    fill.style.width = "100%";
+    if (data.status === "ok") {
+      lbl.textContent = `✓ ${data.file} ingested — ${data.chunks} chunks created`;
+      setTimeout(() => {
+        prog.style.display = "none";
+        fill.style.width   = "0%";
+        document.getElementById("file-input").value = "";
+        pendingFile = null;
+        loadFiles();
+      }, 1500);
+    } else {
+      lbl.textContent = "Error: " + JSON.stringify(data);
+    }
+  } catch(e) {
+    lbl.textContent = "Upload failed: " + e.message;
+  }
+}
+
+async function toggleFile(id, enabled) {
+  await fetch(`/api/files/${id}`, {
+    method:  "PATCH",
+    headers: {"Content-Type": "application/json"},
+    body:    JSON.stringify({is_enabled: enabled})
+  });
+  // Update local state
+  allFiles = allFiles.map(f => f.id === id ? {...f, is_enabled: enabled} : f);
+  renderTable();
+}
+
+async function deleteFile(id, name) {
+  if (!confirm(`Delete "${name}"?\n\nThis removes it from the knowledge base permanently.`))
+    return;
+  await fetch(`/api/files/${id}`, {method: "DELETE"});
+  await loadFiles();
+}
+
+loadFiles();
+</script>
+<script src="/static/dashboard/auth.js"></script>
+</body>
+</html>

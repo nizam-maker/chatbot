@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Login — ChatPlatform</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1a6f4a;--primary-h:#145a3c;
+  --bg:#f4f3ef;--surface:#fff;--border:#e2e0d8;
+  --text:#1c1c1a;--muted:#7a7870;
+  --danger:#E24B4A;
+  --font:"Segoe UI",system-ui,sans-serif;--radius:10px;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);
+     min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:var(--surface);border:1px solid var(--border);
+      border-radius:16px;padding:36px 40px;width:100%;max-width:400px;
+      box-shadow:0 4px 24px rgba(0,0,0,.06)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.logo-mark{width:36px;height:36px;border-radius:9px;background:var(--primary);
+           display:flex;align-items:center;justify-content:center;
+           color:#fff;font-size:14px;font-weight:700}
+.logo-text{font-size:16px;font-weight:600}
+.logo-sub{font-size:12px;color:var(--muted)}
+h1{font-size:20px;font-weight:600;margin-bottom:4px}
+.subtitle{font-size:13px;color:var(--muted);margin-bottom:24px}
+.field{margin-bottom:14px}
+.field label{font-size:12px;font-weight:500;color:var(--muted);
+             display:block;margin-bottom:4px}
+.field input{width:100%;padding:10px 13px;border:1px solid var(--border);
+             border-radius:8px;font-size:14px;background:var(--bg);
+             color:var(--text);outline:none;transition:border-color .2s;
+             font-family:var(--font)}
+.field input:focus{border-color:var(--primary)}
+.btn{width:100%;padding:11px;border:none;border-radius:8px;
+     font-size:14px;font-weight:500;cursor:pointer;
+     background:var(--primary);color:#fff;transition:background .15s;
+     font-family:var(--font)}
+.btn:hover{background:var(--primary-h)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.error{font-size:13px;color:var(--danger);background:#fce8e8;
+       border:1px solid #f09595;border-radius:8px;
+       padding:9px 12px;margin-bottom:14px;display:none}
+.error.show{display:block}
+.spinner{display:inline-block;width:14px;height:14px;
+         border:2px solid rgba(255,255,255,.4);
+         border-top-color:#fff;border-radius:50%;
+         animation:spin .6s linear infinite;vertical-align:middle;
+         margin-right:6px;display:none}
+.spinner.show{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-mark">CP</div>
+    <div>
+      <div class="logo-text">ChatPlatform</div>
+      <div class="logo-sub">Management dashboard</div>
+    </div>
+  </div>
+
+  <h1>Sign in</h1>
+  <p class="subtitle">Enter your admin credentials to continue</p>
+
+  <div class="error" id="error-msg"></div>
+
+  <div class="field">
+    <label>Email</label>
+    <input type="email" id="email" placeholder="admin@example.com"
+           onkeydown="if(event.key==='Enter')login()"/>
+  </div>
+  <div class="field">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="••••••••"
+           onkeydown="if(event.key==='Enter')login()"/>
+  </div>
+
+  <button class="btn" id="login-btn" onclick="login()">
+    <span class="spinner" id="spinner"></span>
+    Sign in
+  </button>
+</div>
+
+<script>
+// ── Init Supabase client ──────────────────────────────────────
+let _cfg = null;
+async function getConfig() {
+  if (_cfg) return _cfg;
+  const res = await fetch("/api/public-config");
+  _cfg = await res.json();
+  return _cfg;
+}
+
+async function getSupabase() {
+  const cfg = await getConfig();
+  return supabase.createClient(cfg.supabase_url, cfg.supabase_anon_key);
+}
+
+// ── Check already logged in ───────────────────────────────────
+(async () => {
+  const sb   = await getSupabase();
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) window.location.href = "/dashboard";
+})();
+
+// ── Login ─────────────────────────────────────────────────────
+async function login() {
+  const email    = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const btn      = document.getElementById("login-btn");
+  const spinner  = document.getElementById("spinner");
+  const errEl    = document.getElementById("error-msg");
+
+  if (!email || !password) {
+    showError("Please enter your email and password.");
+    return;
+  }
+
+  btn.disabled = true;
+  spinner.classList.add("show");
+  errEl.classList.remove("show");
+
+  try {
+    const sb = await getSupabase();
+    const { data, error } = await sb.auth.signInWithPassword({email, password});
+
+    if (error) {
+      showError(error.message || "Invalid credentials. Please try again.");
+      return;
+    }
+
+    // Redirect to dashboard
+    window.location.href = "/dashboard";
+
+  } catch(e) {
+    showError("Connection error. Is the server running?");
+  } finally {
+    btn.disabled = false;
+    spinner.classList.remove("show");
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById("error-msg");
+  el.textContent = msg;
+  el.classList.add("show");
+}
+</script>
+</body>
+</html>

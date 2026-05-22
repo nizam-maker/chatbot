@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tenants — ChatPlatform</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1a6f4a;--primary-h:#145a3c;
+  --bg:#f4f3ef;--surface:#fff;--border:#e2e0d8;
+  --text:#1c1c1a;--muted:#7a7870;
+  --success:#1D9E75;--danger:#E24B4A;--warning:#EF9F27;--info:#3B7DD8;
+  --font:"Segoe UI",system-ui,sans-serif;--mono:"Cascadia Code","Fira Mono",monospace;
+  --radius:10px;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+.sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+.sidebar-logo{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;border-radius:8px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700}
+.logo-text{font-size:14px;font-weight:600}.logo-sub{font-size:11px;color:var(--muted)}
+nav{padding:10px 8px;flex:1}
+.nav-section{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:10px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;text-decoration:none;margin-bottom:1px}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:#e8f4ee;color:var(--primary);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+.tenant-badge{display:inline-flex;align-items:center;gap:5px;background:#e8f4ee;color:var(--primary);padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500;margin-top:4px}
+.dot-live{width:6px;height:6px;border-radius:50%;background:var(--success);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px}
+.topbar h1{font-size:16px;font-weight:600}.topbar p{font-size:13px;color:var(--muted)}
+.topbar-actions{margin-left:auto;display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;background:transparent;color:var(--text);cursor:pointer;transition:all .15s;text-decoration:none}
+.btn:hover{background:var(--bg)}.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-h)}
+.btn-danger{color:var(--danger);border-color:var(--danger)}
+.btn-danger:hover{background:#fce8e8}
+.btn-sm{padding:5px 10px;font-size:12px}
+.content{flex:1;overflow-y:auto;padding:24px}
+.layout{display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start}
+
+/* Tenant list */
+.tenant-list{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.tenant-list-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:500}
+.tenant-item{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.tenant-item:last-child{border-bottom:none}
+.tenant-item:hover{background:var(--bg)}
+.tenant-item.active{background:#e8f4ee}
+.t-avatar{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
+.t-name{font-size:13px;font-weight:500}
+.t-slug{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.t-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-left:auto}
+
+/* Detail panel */
+.detail{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg)}
+.tab{padding:10px 16px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s}
+.tab.active{color:var(--text);border-bottom-color:var(--primary)}
+.tab-panel{display:none;padding:20px}
+.tab-panel.active{display:block}
+.section-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px;margin-top:18px}
+.section-label:first-child{margin-top:0}
+.field{margin-bottom:12px}
+.field label{font-size:12px;color:var(--muted);font-weight:500;display:block;margin-bottom:3px}
+.field input,.field select,.field textarea{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);outline:none;font-family:var(--font)}
+.field textarea{resize:vertical;height:80px}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.color-row{display:flex;gap:6px;align-items:center}
+.color-row input[type=color]{width:36px;height:34px;padding:2px;border-radius:8px;border:1px solid var(--border);cursor:pointer;flex-shrink:0}
+
+/* BYOK panel */
+.byok-card{border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.byok-mode{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px}
+.byok-mode.platform{background:#e8f4ee;color:#085041}
+.byok-mode.byok{background:#e8effe;color:#1a4d99}
+.key-display{font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;border:1px solid}
+.badge-ok{background:#e8f4ee;color:var(--success);border-color:#5dcaa5}
+.badge-platform{background:#faeeda;color:#633806;border-color:#efb347}
+.badge-byok{background:#e8effe;color:#1a4d99;border-color:#8aabec}
+
+/* API keys */
+.key-row{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg);border-radius:8px;margin-bottom:6px}
+.key-val{font-family:var(--mono);font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.key-type{font-size:10px;font-weight:500;padding:2px 6px;border-radius:10px;border:1px solid;flex-shrink:0}
+.kt-pub{background:#e8f4ee;color:#085041;border-color:#5dcaa5}
+.kt-sec{background:#fce8e8;color:#a32d2d;border-color:#f09595}
+
+/* Embed code */
+.code-block{background:#f8f7f3;border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:12px;line-height:1.8;overflow-x:auto;position:relative}
+.copy-btn{position:absolute;top:8px;right:8px}
+.kw{color:#185FA5}.str{color:#1a6f4a}.attr{color:#BA7517}
+
+/* Toggle */
+.toggle{position:relative;width:30px;height:17px;display:inline-block}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.slider{position:absolute;inset:0;border-radius:9px;background:var(--border);cursor:pointer;transition:background .2s}
+.slider:before{content:'';position:absolute;width:11px;height:11px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .2s}
+.toggle input:checked+.slider{background:var(--success)}
+.toggle input:checked+.slider:before{transform:translateX(13px)}
+
+.empty-state{text-align:center;padding:40px;color:var(--muted);font-size:13px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;display:none}
+.alert.ok{background:#e8f4ee;color:#085041;border:1px solid #5dcaa5;display:block}
+.alert.err{background:#fce8e8;color:#a32d2d;border:1px solid #f09595;display:block}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">CP</div>
+    <div><div class="logo-text">ChatPlatform</div><div class="logo-sub">Management dashboard</div></div>
+  </div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <a href="/dashboard" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <div class="nav-section">Knowledge</div>
+    <a href="/dashboard/files" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      File manager
+    </a>
+    <a href="/dashboard/scraper" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+      Scraper manager
+    </a>
+    <div class="nav-section">Chat</div>
+    <a href="/dashboard/tester" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Chat tester
+    </a>
+    <a href="/" class="nav-item" target="_blank">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Live chatbot
+    </a>
+    <div class="nav-section">Platform</div>
+    <a href="/dashboard/tenants" class="nav-item active">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Tenants
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div>Signed in as</div>
+    <div style="font-weight:500;margin-top:2px">Admin</div>
+    <div class="tenant-badge"><div class="dot-live"></div>Laman Auto</div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1>Tenants</h1>
+      <p>Manage branding, API keys and billing mode</p>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-primary" onclick="showNewTenantModal()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New tenant
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="layout">
+
+      <!-- Tenant list -->
+      <div>
+        <div class="tenant-list" id="tenant-list">
+          <div class="tenant-list-head">
+            <span>Tenants</span>
+            <span id="tenant-count" style="font-size:12px;color:var(--muted)"></span>
+          </div>
+          <div id="tenant-items">
+            <div class="empty-state"><span class="spinner"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail panel -->
+      <div class="detail" id="detail-panel">
+        <div class="empty-state" id="detail-empty">
+          Select a tenant to view details
+        </div>
+        <div id="detail-content" style="display:none">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab('branding',this)">Branding</div>
+            <div class="tab" onclick="switchTab('billing',this)">AI &amp; billing</div>
+            <div class="tab" onclick="switchTab('keys',this)">API keys</div>
+            <div class="tab" onclick="switchTab('embed',this)">Embed</div>
+          </div>
+
+          <!-- Branding tab -->
+          <div class="tab-panel active" id="tab-branding">
+            <div id="branding-alert" class="alert"></div>
+            <div class="section-label">Identity</div>
+            <div class="form-row">
+              <div class="field"><label>Display name</label><input type="text" id="b-name"/></div>
+              <div class="field"><label>Bot name</label><input type="text" id="b-botname"/></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Slug (read-only)</label><input type="text" id="b-slug" readonly style="color:var(--muted);font-family:var(--mono)"/></div>
+              <div class="field"><label>Initials (2 chars)</label><input type="text" id="b-initials" maxlength="2"/></div>
+            </div>
+            <div class="section-label">Colour</div>
+            <div class="field">
+              <label>Brand colour</label>
+              <div class="color-row">
+                <input type="color" id="b-color-pick" oninput="document.getElementById('b-color').value=this.value"/>
+                <input type="text" id="b-color" oninput="document.getElementById('b-color-pick').value=this.value"/>
+              </div>
+            </div>
+            <div class="section-label">Messages</div>
+            <div class="field"><label>Welcome message</label><textarea id="b-welcome"></textarea></div>
+            <div class="field"><label>System prompt</label><textarea id="b-prompt" style="height:120px"></textarea></div>
+            <div class="section-label">Settings</div>
+            <div class="form-row">
+              <div class="field"><label>Industry</label>
+                <select id="b-industry">
+                  <option>Automotive</option><option>Healthcare</option>
+                  <option>Legal</option><option>Education</option>
+                  <option>Finance</option><option>Other</option>
+                </select>
+              </div>
+              <div class="field"><label>Plan</label>
+                <select id="b-plan">
+                  <option value="starter">Starter</option>
+                  <option value="pro">Pro</option>
+                  <option value="enterprise">Enterprise</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn btn-primary" onclick="saveBranding()">Save changes</button>
+              <button class="btn" onclick="loadTenants()">Discard</button>
+            </div>
+          </div>
+
+          <!-- Billing tab -->
+          <div class="tab-panel" id="tab-billing">
+            <div id="billing-alert" class="alert"></div>
+
+            <div class="section-label">Current billing mode</div>
+            <div class="byok-mode platform" id="billing-mode-badge">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+              <span id="billing-mode-text">Platform billing — using shared API key</span>
+            </div>
+
+            <div class="byok-card">
+              <div style="font-size:13px;font-weight:500;margin-bottom:6px">
+                AI provider
+              </div>
+              <div class="form-row" style="margin-bottom:12px">
+                <div class="field">
+                  <label>Provider</label>
+                  <select id="ai-provider">
+                    <option value="anthropic">Anthropic (Claude)</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Model</label>
+                  <select id="ai-model">
+                    <option value="claude-sonnet-4-20250514">Claude Sonnet 4.5</option>
+                    <option value="claude-opus-4-20250514">Claude Opus 4</option>
+                    <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-sm" onclick="saveAISettings()">Save AI settings</button>
+            </div>
+
+            <div class="byok-card">
+              <div style="font-size:13px;font-weight:500;margin-bottom:4px">
+                Bring Your Own Key (BYOK)
+              </div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">
+                Tenant provides their own Anthropic API key. API costs are billed directly to their Anthropic account.
+              </div>
+              <div class="key-display" id="byok-display" style="display:none">
+                <span id="byok-masked">••••••••</span>
+                <button class="btn btn-sm btn-danger" onclick="removeBYOK()">Remove</button>
+              </div>
+              <div id="byok-form">
+                <div class="field">
+                  <label>Anthropic API key</label>
+                  <input type="password" id="byok-input" placeholder="sk-ant-api03-..."/>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                  <button class="btn btn-primary btn-sm" onclick="saveBYOK()">Save &amp; enable BYOK</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- API keys tab -->
+          <div class="tab-panel" id="tab-keys">
+            <div class="section-label">Platform API keys</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">
+              Use the public key in your embed script. Keep the secret key server-side only.
+            </div>
+            <div id="keys-list">
+              <div class="empty-state"><span class="spinner"></span></div>
+            </div>
+            <button class="btn btn-sm" style="margin-top:10px" onclick="generateKey()">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Generate new key
+            </button>
+          </div>
+
+          <!-- Embed tab -->
+          <div class="tab-panel" id="tab-embed">
+            <div class="section-label">Embed script</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">
+              Paste this before <code style="font-family:var(--mono)">&lt;/body&gt;</code> on any webpage to add the chat widget.
+            </div>
+            <div class="code-block" id="embed-code">
+              <button class="btn btn-sm copy-btn" onclick="copyEmbed()">Copy</button>
+              <pre id="embed-pre" style="margin:0;white-space:pre-wrap;word-break:break-all">Loading...</pre>
+            </div>
+            <div style="margin-top:14px;font-size:13px;color:var(--muted)">
+              The widget loads as a floating bubble in the bottom-right corner of the page.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+let tenants     = [];
+let activeTenant = null;
+
+async function loadTenants() {
+  const res = await fetch("/api/tenants");
+  tenants   = await res.json();
+  document.getElementById("tenant-count").textContent = tenants.length + " total";
+
+  document.getElementById("tenant-items").innerHTML = tenants.map(t => `
+    <div class="tenant-item ${activeTenant?.slug===t.slug?'active':''}"
+         onclick="selectTenant('${t.slug}')">
+      <div class="t-avatar" style="background:${t.brand_color||'#888'}">${t.brand_initials||'?'}</div>
+      <div>
+        <div class="t-name">${t.name}</div>
+        <div class="t-slug">${t.slug}</div>
+      </div>
+      <div class="t-dot" style="background:${t.is_active?'var(--success)':'var(--border)'}"></div>
+    </div>`).join("");
+}
+
+async function selectTenant(slug) {
+  activeTenant = tenants.find(t => t.slug === slug);
+  if (!activeTenant) return;
+
+  document.getElementById("detail-empty").style.display   = "none";
+  document.getElementById("detail-content").style.display = "block";
+  await loadTenants(); // re-render list with active highlight
+
+  // Branding tab
+  document.getElementById("b-name").value     = activeTenant.name || "";
+  document.getElementById("b-botname").value  = activeTenant.bot_name || "";
+  document.getElementById("b-slug").value     = activeTenant.slug || "";
+  document.getElementById("b-initials").value = activeTenant.brand_initials || "";
+  document.getElementById("b-color").value    = activeTenant.brand_color || "#1a6f4a";
+  document.getElementById("b-color-pick").value = activeTenant.brand_color || "#1a6f4a";
+  document.getElementById("b-welcome").value  = activeTenant.welcome_msg || "";
+  document.getElementById("b-prompt").value   = activeTenant.system_prompt || "";
+  document.getElementById("b-industry").value = activeTenant.industry || "Other";
+  document.getElementById("b-plan").value     = activeTenant.plan || "starter";
+
+  // Billing tab
+  const isByok = activeTenant.billing_mode === "byok";
+  const badge  = document.getElementById("billing-mode-badge");
+  badge.className = "byok-mode " + (isByok ? "byok" : "platform");
+  document.getElementById("billing-mode-text").textContent = isByok
+    ? "BYOK — tenant using their own API key"
+    : "Platform billing — using shared API key";
+  document.getElementById("ai-provider").value = activeTenant.ai_provider || "anthropic";
+  document.getElementById("ai-model").value    = activeTenant.ai_model || "claude-sonnet-4-20250514";
+
+  if (isByok && activeTenant.ai_api_key_masked) {
+    document.getElementById("byok-display").style.display = "flex";
+    document.getElementById("byok-form").style.display    = "none";
+    document.getElementById("byok-masked").textContent    = activeTenant.ai_api_key_masked;
+  } else {
+    document.getElementById("byok-display").style.display = "none";
+    document.getElementById("byok-form").style.display    = "block";
+  }
+
+  // API keys tab
+  await loadKeys();
+
+  // Embed tab
+  await loadEmbed();
+}
+
+async function saveBranding() {
+  const body = {
+    name:          document.getElementById("b-name").value,
+    bot_name:      document.getElementById("b-botname").value,
+    brand_initials:document.getElementById("b-initials").value,
+    brand_color:   document.getElementById("b-color").value,
+    welcome_msg:   document.getElementById("b-welcome").value,
+    system_prompt: document.getElementById("b-prompt").value,
+    industry:      document.getElementById("b-industry").value,
+    plan:          document.getElementById("b-plan").value,
+  };
+  const res  = await fetch(`/api/tenants/${activeTenant.slug}`, {
+    method:  "PATCH",
+    headers: {"Content-Type": "application/json"},
+    body:    JSON.stringify(body)
+  });
+  const data = await res.json();
+  showAlert("branding", data.status === "ok" ? "ok" : "err",
+    data.status === "ok" ? "Changes saved ✓" : "Save failed");
+  await loadTenants();
+}
+
+async function saveAISettings() {
+  await fetch(`/api/tenants/${activeTenant.slug}`, {
+    method:  "PATCH",
+    headers: {"Content-Type": "application/json"},
+    body:    JSON.stringify({
+      ai_provider: document.getElementById("ai-provider").value,
+      ai_model:    document.getElementById("ai-model").value,
+    })
+  });
+  showAlert("billing", "ok", "AI settings saved ✓");
+}
+
+async function saveBYOK() {
+  const key = document.getElementById("byok-input").value.trim();
+  if (!key) return;
+  const res  = await fetch(`/api/tenants/${activeTenant.slug}/api-key`, {
+    method:  "POST",
+    headers: {"Content-Type": "application/json"},
+    body:    JSON.stringify({api_key: key})
+  });
+  const data = await res.json();
+  if (data.status === "ok") {
+    showAlert("billing", "ok", `BYOK enabled ✓ — key saved as ${data.masked}`);
+    document.getElementById("byok-input").value = "";
+    await selectTenant(activeTenant.slug);
+    await loadTenants();
+  } else {
+    showAlert("billing", "err", data.error || "Failed to save key");
+  }
+}
+
+async function removeBYOK() {
+  if (!confirm("Remove BYOK key? Billing will revert to platform key.")) return;
+  await fetch(`/api/tenants/${activeTenant.slug}/api-key`, {method:"DELETE"});
+  showAlert("billing", "ok", "BYOK removed — reverted to platform billing");
+  await selectTenant(activeTenant.slug);
+  await loadTenants();
+}
+
+async function loadKeys() {
+  const res  = await fetch(`/api/tenants/${activeTenant.slug}/keys`);
+  if (!res.ok) { document.getElementById("keys-list").innerHTML = "<div class='empty-state'>No keys found</div>"; return; }
+  const keys = await res.json();
+  document.getElementById("keys-list").innerHTML = keys.map(k => `
+    <div class="key-row">
+      <svg width="14" height="14" fill="none" stroke="var(--muted)" stroke-width="2" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+      <div class="key-val">${k.key_value}</div>
+      <span class="key-type ${k.key_type==='public'?'kt-pub':'kt-sec'}">${k.key_type}</span>
+    </div>`).join("");
+}
+
+async function loadEmbed() {
+  const res  = await fetch(`/api/tenants/${activeTenant.slug}/embed-script`);
+  const data = await res.json();
+  document.getElementById("embed-pre").textContent = data.script || "Error loading script";
+}
+
+async function generateKey() {
+  await fetch(`/api/tenants/${activeTenant.slug}/keys`, {method:"POST"});
+  await loadKeys();
+}
+
+function copyEmbed() {
+  const text = document.getElementById("embed-pre").textContent;
+  navigator.clipboard.writeText(text).then(() => alert("Copied!"));
+}
+
+function showAlert(panel, type, msg) {
+  const el = document.getElementById(panel + "-alert");
+  el.textContent = msg;
+  el.className   = "alert " + type;
+  setTimeout(() => { el.className = "alert"; }, 4000);
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  el.classList.add("active");
+  document.getElementById("tab-" + name).classList.add("active");
+  if (name === "keys")  loadKeys();
+  if (name === "embed") loadEmbed();
+}
+
+function showNewTenantModal() {
+  const name = prompt("New tenant name:");
+  if (!name) return;
+  const slug = prompt("Slug (URL-safe ID):", name.toLowerCase().replace(/\s+/g,"_"));
+  if (!slug) return;
+  fetch("/api/tenants", {
+    method:  "POST",
+    headers: {"Content-Type":"application/json"},
+    body:    JSON.stringify({name, slug})
+  }).then(r=>r.json()).then(d => {
+    if (d.slug) { loadTenants(); selectTenant(d.slug); }
+    else alert("Error: " + JSON.stringify(d));
+  });
+}
+
+// Add keys endpoint
+fetch("/api/tenants/laman_auto/keys").then(r => {
+  if (!r.ok) {
+    // Add GET keys route note
+  }
+});
+
+loadTenants();
+</script>
+<script src="/static/dashboard/auth.js"></script>
+</body>
+</html>

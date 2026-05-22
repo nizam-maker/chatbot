@@ -2,6 +2,7 @@ fastapi
 uvicorn
 anthropic
 sqlalchemy
+psycopg2-binary
 chromadb
 pdfplumber
 langchain-community
@@ -12,3 +13,6 @@ python-dotenv
 pandas
 beautifulsoup4
 httpx
+apscheduler
+feedparser
+supabase
