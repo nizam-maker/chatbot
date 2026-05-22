@@ -23,6 +23,13 @@ from core.scheduler import start_scheduler, stop_scheduler, get_status
 
 load_dotenv()
 
+# ── Configure OCR paths ───────────────────────────────────────
+import platform
+if platform.system() == "Linux":
+    # Railway runs on Linux — tesseract installed via apt
+    os.environ.setdefault("TESSERACT_PATH", "/usr/bin/tesseract")
+    os.environ.setdefault("POPPLER_PATH",   "/usr/bin")
+
 # ── Auto-run DB init + seed on startup ───────────────────────
 try:
     from tenants.laman_auto.schema import init_db, SessionLocal

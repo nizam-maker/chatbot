@@ -1,0 +1,9 @@
+# nixpacks.toml
+# Tells Railway to install system dependencies
+# alongside the Python packages
+
+[phases.setup]
+nixPkgs = [
+  "tesseract",
+  "poppler_utils",
+]
