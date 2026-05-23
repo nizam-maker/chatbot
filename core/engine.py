@@ -189,13 +189,34 @@ def chat(
     # 3. Query structured DB (Supabase) for prices, stock, rebates
     db_context = _db_context(user_msg)
 
-    # 4. Build system prompt — inject all context layers
+    # 4. Check for lead capture opportunity
+    from core.leads import (
+        should_ask_for_contact, get_lead_prompt,
+        process_lead_from_message
+    )
+
+    print(f"[debug] session contact_asked={session.get('contact_asked')} lead_captured={session.get('lead_captured')} msg={user_msg[:30]}", flush=True)
+
+
+
+    # Process contact info from current message
+    lead_updates = process_lead_from_message(user_msg, session, tenant_id)
+    print(f"[debug] lead_updates={lead_updates}", flush=True)
+    session.update(lead_updates)
+
+    # 5. Build system prompt — inject all context layers
     system = tenant_cfg["SYSTEM_PROMPT"]
 
     if db_context:
         system += f"\n\n{db_context}"
     if context:
         system += f"\n\n[Knowledge base — brochures & specs]\n{context}"
+
+    # Inject lead capture prompt if intent detected
+    if should_ask_for_contact(session):
+        system += get_lead_prompt(session.get("car_interest", ""))
+        session["contact_asked"] = True
+
     if session.get("summary"):
         system += f"\n\n[Customer saga so far]\n{session['summary']}"
     if session.get("customer_name"):

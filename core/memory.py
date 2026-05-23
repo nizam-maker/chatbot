@@ -5,9 +5,9 @@
 #  Stores: last 10 messages, customer name, car interest
 # ─────────────────────────────────────────────────────────────
 
-import os
 import sqlite3
 import json
+import os
 from datetime import datetime
 
 MEM_DB = os.getenv("MEMORY_DB_PATH", "memory.db")
@@ -31,9 +31,20 @@ def init_memory():
                 last_intent   TEXT,
                 messages      TEXT,
                 summary       TEXT,
+                contact_asked INTEGER DEFAULT 0,
+                lead_captured INTEGER DEFAULT 0,
                 updated_at    TEXT
             )
         """)
+        # Add columns if upgrading from older schema
+        try:
+            c.execute("ALTER TABLE sessions ADD COLUMN contact_asked INTEGER DEFAULT 0")
+        except Exception:
+            pass
+        try:
+            c.execute("ALTER TABLE sessions ADD COLUMN lead_captured INTEGER DEFAULT 0")
+        except Exception:
+            pass
 
 
 def load_session(session_id: str) -> dict:
@@ -54,6 +65,8 @@ def load_session(session_id: str) -> dict:
             "last_intent":   "",
             "messages":      [],
             "summary":       "",
+            "contact_asked": False,
+            "lead_captured": False,
         }
 
     return {
@@ -65,6 +78,8 @@ def load_session(session_id: str) -> dict:
         "last_intent":   row[5],
         "messages":      json.loads(row[6] or "[]"),
         "summary":       row[7] or "",
+        "contact_asked": bool(row[8]) if len(row) > 8 else False,
+        "lead_captured": bool(row[9]) if len(row) > 9 else False,
     }
 
 
@@ -76,8 +91,9 @@ def save_session(session: dict):
         c.execute("""
             INSERT INTO sessions
                 (session_id, tenant_id, customer_id, customer_name,
-                 car_interest, last_intent, messages, summary, updated_at)
-            VALUES (?,?,?,?,?,?,?,?,?)
+                 car_interest, last_intent, messages, summary,
+                 contact_asked, lead_captured, updated_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)
             ON CONFLICT(session_id) DO UPDATE SET
                 tenant_id     = excluded.tenant_id,
                 customer_name = excluded.customer_name,
@@ -85,6 +101,8 @@ def save_session(session: dict):
                 last_intent   = excluded.last_intent,
                 messages      = excluded.messages,
                 summary       = excluded.summary,
+                contact_asked = excluded.contact_asked,
+                lead_captured = excluded.lead_captured,
                 updated_at    = excluded.updated_at
         """, (
             session["session_id"],
@@ -95,6 +113,8 @@ def save_session(session: dict):
             session.get("last_intent",   ""),
             json.dumps(msgs),
             session.get("summary",       ""),
+            int(bool(session.get("contact_asked", False))),
+            int(bool(session.get("lead_captured", False))),
             datetime.utcnow().isoformat()
         ))
 
