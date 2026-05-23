@@ -10,5 +10,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/nizam-maker/chatbot"
+  },
+  "peerDependencies": {
+    "react": ">=17",
+    "vue": ">=3"
   }
 }
