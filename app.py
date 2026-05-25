@@ -626,6 +626,7 @@ async def widget_js(tenant: str = "", key: str = ""):
     'border:none',
     'z-index:2147483647',
     'background:transparent',
+    'background-color:transparent',
     'pointer-events:all'
   ].join(';');
   iframe.setAttribute('allow', 'microphone');
