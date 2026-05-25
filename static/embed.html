@@ -8,9 +8,13 @@
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --primary:#1a6f4a;--primary-h:#145a3c;
-  --bg:#f4f3ef;--surface:#fff;--border:#e2e0d8;
+  --bg:rgba(0,0,0,0.15);
+  --surface:rgba(255,255,255,0.08);
+  --border:rgba(255,255,255,0.15);
   --user-bg:#1a6f4a;--user-txt:#fff;
-  --bot-bg:#fff;--bot-txt:#1c1c1a;--muted:#7a7870;
+  --bot-bg:rgba(255,255,255,0.10);
+  --bot-txt:#ffffff;
+  --muted:rgba(255,255,255,0.6);
   --font:"Segoe UI",system-ui,sans-serif;--radius:12px;
 }
 html{height:100%;overflow:hidden;background:transparent !important;background-color:transparent !important}
@@ -35,9 +39,12 @@ body{font-family:var(--font);display:flex;flex-direction:column;
 /* ── Chat window ── */
 #chat-window{position:fixed;bottom:86px;right:20px;
              width:360px;height:520px;
-             background:var(--surface);
+             background:rgba(0,0,0,0.45);
+             backdrop-filter:blur(16px);
+             -webkit-backdrop-filter:blur(16px);
+             border:1px solid rgba(255,255,255,0.12);
              border-radius:16px;overflow:hidden;
-             box-shadow:0 8px 40px rgba(0,0,0,.16);
+             box-shadow:0 8px 40px rgba(0,0,0,.4);
              display:flex;flex-direction:column;
              transform:scale(.85) translateY(20px);
              opacity:0;pointer-events:none;
@@ -94,13 +101,16 @@ body{font-family:var(--font);display:flex;flex-direction:column;
 @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
 
 /* Input */
-.input-bar{padding:10px 12px;border-top:1px solid var(--border);
-           background:var(--surface);display:flex;gap:8px;
+.input-bar{padding:10px 12px;border-top:1px solid rgba(255,255,255,0.12);
+           background:rgba(0,0,0,0.2);display:flex;gap:8px;
            align-items:flex-end;flex-shrink:0}
-#msg-input{flex:1;padding:8px 12px;border:1px solid var(--border);
+#msg-input{flex:1;padding:8px 12px;border:1px solid rgba(255,255,255,0.2);
            border-radius:20px;font-size:13px;font-family:var(--font);
            resize:none;outline:none;max-height:80px;
-           background:var(--bg);line-height:1.4;transition:border-color .2s}
+           background:rgba(255,255,255,0.1);
+           color:#fff;
+           line-height:1.4;transition:border-color .2s}
+#msg-input::placeholder{color:rgba(255,255,255,0.4)}
 #msg-input:focus{border-color:var(--primary)}
 .send-btn{width:34px;height:34px;border:none;border-radius:50%;
           background:var(--primary);color:#fff;flex-shrink:0;
@@ -110,8 +120,8 @@ body{font-family:var(--font);display:flex;flex-direction:column;
 
 /* Branding footer */
 .branding{text-align:center;padding:5px;font-size:10px;
-          color:var(--muted);background:var(--surface);flex-shrink:0}
-.branding a{color:var(--muted);text-decoration:none}
+          color:rgba(255,255,255,0.4);background:transparent;flex-shrink:0}
+.branding a{color:rgba(255,255,255,0.4);text-decoration:none}
 .branding a:hover{text-decoration:underline}
 
 /* Notification dot */
