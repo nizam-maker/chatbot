@@ -484,6 +484,17 @@ async def get_tenants():
     return tenants
 
 
+@app.get("/api/tenants/{slug}")
+async def get_tenant(slug: str):
+    from core.supabase_client import sb
+    res = sb.table("tenants").select("*").eq("slug", slug).single().execute()
+    t   = res.data
+    if not t:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    t.pop("ai_api_key_enc", None)
+    return t
+
+
 @app.post("/api/tenants")
 async def create_tenant(req: Request):
     from core.supabase_client import sb, generate_api_key
@@ -631,3 +642,55 @@ async def embed_chat(slug: str, key: str = ""):
         with open(html_path, encoding="utf-8") as f:
             return HTMLResponse(content=f.read(), media_type="text/html; charset=utf-8")
     return HTMLResponse("<p>Chat unavailable</p>")
+
+# ── Sales contacts API — paste into app.py ───────────────────
+# Add these routes AFTER the existing scraper URL CRUD section
+
+@app.get("/api/customers")
+async def get_customers():
+    from core.supabase_client import sb
+    res = sb.table("customers").select("*").order("created_at", desc=True).execute()
+    return res.data or []
+
+
+@app.get("/api/sales-contacts")
+async def get_sales_contacts():
+    from core.supabase_client import sb
+    res = sb.table("sales_contacts").select("*").order("created_at").execute()
+    return res.data or []
+
+
+@app.post("/api/sales-contacts")
+async def add_sales_contact(req: Request):
+    from core.supabase_client import sb
+    body = await req.json()
+    email = body.get("email", "").strip()
+    name  = body.get("name", "").strip()
+    if not email or not name:
+        return JSONResponse({"error": "name and email are required"}, status_code=400)
+    data = {
+        "name":   name,
+        "email":  email,
+        "phone":  body.get("phone", ""),
+        "role":   body.get("role", "Sales"),
+        "active": True,
+    }
+    res = sb.table("sales_contacts").insert(data).execute()
+    return res.data[0] if res.data else JSONResponse({"error": "Insert failed"}, status_code=500)
+
+
+@app.patch("/api/sales-contacts/{contact_id}")
+async def update_sales_contact(contact_id: str, req: Request):
+    from core.supabase_client import sb
+    body    = await req.json()
+    allowed = ["name", "email", "phone", "role", "active"]
+    update  = {k: v for k, v in body.items() if k in allowed}
+    sb.table("sales_contacts").update(update).eq("id", contact_id).execute()
+    return {"status": "ok"}
+
+
+@app.delete("/api/sales-contacts/{contact_id}")
+async def delete_sales_contact(contact_id: str):
+    from core.supabase_client import sb
+    sb.table("sales_contacts").delete().eq("id", contact_id).execute()
+    return {"status": "ok"}

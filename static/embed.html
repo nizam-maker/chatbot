@@ -13,7 +13,7 @@
   --bot-bg:#fff;--bot-txt:#1c1c1a;--muted:#7a7870;
   --font:"Segoe UI",system-ui,sans-serif;--radius:12px;
 }
-html,body{height:100%;overflow:hidden;background:transparent}
+html,body{height:100%;overflow:hidden;background:transparent !important;background-color:transparent !important}
 body{font-family:var(--font);display:flex;flex-direction:column;
      align-items:flex-end;justify-content:flex-end;padding:0}
 
@@ -201,7 +201,7 @@ const BASE = window.location.origin;
 
 async function loadConfig() {
   try {
-    const cfg = await fetch(`${BASE}/api/config`).then(r => r.json());
+    const cfg = await fetch(`${BASE}/api/tenants/${slug}`).then(r => r.json());
     initials  = cfg.brand_initials || "AI";
 
     document.title                                        = cfg.bot_name || "Chat";

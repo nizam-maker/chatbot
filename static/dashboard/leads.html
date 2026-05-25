@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Leads – ChatPlatform</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1a6f4a;--primary-h:#145a3c;
+  --bg:#f4f3ef;--surface:#fff;--border:#e2e0d8;
+  --text:#1c1c1a;--muted:#7a7870;
+  --success:#1D9E75;--danger:#E24B4A;--warning:#EF9F27;--info:#3B7DD8;
+  --font:"Segoe UI",system-ui,sans-serif;--mono:"Cascadia Code","Fira Mono",monospace;
+  --radius:10px;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+.sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+.sidebar-logo{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;border-radius:8px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700}
+.logo-text{font-size:14px;font-weight:600}.logo-sub{font-size:11px;color:var(--muted)}
+nav{padding:10px 8px;flex:1}
+.nav-section{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:10px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;text-decoration:none;margin-bottom:1px}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:#e8f4ee;color:var(--primary);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+.tenant-badge{display:inline-flex;align-items:center;gap:5px;background:#e8f4ee;color:var(--primary);padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500;margin-top:4px}
+.dot-live{width:6px;height:6px;border-radius:50%;background:var(--success);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px}
+.topbar h1{font-size:16px;font-weight:600}.topbar p{font-size:13px;color:var(--muted)}
+.topbar-actions{margin-left:auto;display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;background:transparent;color:var(--text);cursor:pointer;transition:all .15s;text-decoration:none}
+.btn:hover{background:var(--bg)}.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-h)}
+.btn-danger{color:var(--danger);border-color:var(--danger)}
+.btn-danger:hover{background:#fce8e8}
+.btn-sm{padding:5px 10px;font-size:12px}
+.content{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:20px}
+
+/* Tabs */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.card-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-head-title{font-size:14px;font-weight:600}
+.card-head-sub{font-size:12px;color:var(--muted);margin-top:1px}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{padding:9px 14px;text-align:left;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--border);background:var(--bg)}
+td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf8}
+.badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;border:1px solid}
+.badge-ok{background:#e8f4ee;color:var(--success);border-color:#5dcaa5}
+.badge-off{background:#f5f4f0;color:var(--muted);border-color:var(--border)}
+.phone-link{color:var(--primary);text-decoration:none;font-family:var(--mono);font-size:12px}
+.phone-link:hover{text-decoration:underline}
+
+/* Add contact form */
+.add-form{padding:16px 18px;border-top:1px solid var(--border);background:var(--bg);display:none}
+.add-form.open{display:block}
+.form-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end}
+.field label{font-size:12px;color:var(--muted);font-weight:500;display:block;margin-bottom:3px}
+.field input,.field select{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--surface);color:var(--text);outline:none;font-family:var(--font)}
+.field input:focus,.field select:focus{border-color:var(--primary)}
+
+.empty-state{text-align:center;padding:40px;color:var(--muted);font-size:13px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.alert{padding:10px 14px;border-radius:8px;font-size:13px;margin:0 18px 12px;display:none}
+.alert.ok{background:#e8f4ee;color:#085041;border:1px solid #5dcaa5;display:block}
+.alert.err{background:#fce8e8;color:#a32d2d;border:1px solid #f09595;display:block}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">CP</div>
+    <div><div class="logo-text">ChatPlatform</div><div class="logo-sub">Management dashboard</div></div>
+  </div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <a href="/dashboard" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <div class="nav-section">Knowledge</div>
+    <a href="/dashboard/files" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      File manager
+    </a>
+    <a href="/dashboard/scraper" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+      Scraper manager
+    </a>
+    <div class="nav-section">Chat</div>
+    <a href="/dashboard/tester" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Chat tester
+    </a>
+    <a href="/chat" class="nav-item" target="_blank">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Live chatbot
+    </a>
+    <div class="nav-section">Platform</div>
+    <a href="/dashboard/tenants" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Tenants
+    </a>
+    <div class="nav-section">Leads</div>
+    <a href="/dashboard/leads" class="nav-item active">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Sales contacts
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div>Signed in as</div>
+    <div style="font-weight:500;margin-top:2px">Admin</div>
+    <div class="tenant-badge"><div class="dot-live"></div>Laman Auto</div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1>Leads</h1>
+      <p>Captured contacts and sales notification recipients</p>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn" onclick="loadAll()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Captured leads -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-head-title">Captured leads</div>
+          <div class="card-head-sub">Contacts identified by the chatbot</div>
+        </div>
+        <span id="lead-count" style="font-size:12px;color:var(--muted)"></span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Interest</th>
+            <th>Source</th>
+            <th>Captured</th>
+          </tr>
+        </thead>
+        <tbody id="leads-body">
+          <tr><td colspan="5" class="empty-state"><span class="spinner"></span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sales contacts -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-head-title">Sales contacts</div>
+          <div class="card-head-sub">Receive email alerts when a new lead is captured</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="toggleAddForm()">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add contact
+        </button>
+      </div>
+
+      <div id="contacts-alert" class="alert" style="margin-top:12px"></div>
+
+      <div class="add-form" id="add-form">
+        <div class="form-row">
+          <div class="field"><label>Name</label><input type="text" id="c-name" placeholder="Ahmad Razif"/></div>
+          <div class="field"><label>Email</label><input type="email" id="c-email" placeholder="ahmad@lamanato.my"/></div>
+          <div class="field"><label>Role</label><input type="text" id="c-role" placeholder="Sales" value="Sales"/></div>
+          <button class="btn btn-primary btn-sm" style="height:34px" onclick="addContact()">Save</button>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Active</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="contacts-body">
+          <tr><td colspan="5" class="empty-state"><span class="spinner"></span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function fmtDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-MY", {day:"2-digit",month:"short",year:"numeric"}) +
+    " " + d.toLocaleTimeString("en-MY", {hour:"2-digit",minute:"2-digit"});
+}
+
+async function loadLeads() {
+  const res  = await fetch("/api/customers");
+  const rows = await res.json();
+  document.getElementById("lead-count").textContent = rows.length + " total";
+  document.getElementById("leads-body").innerHTML = rows.length ? rows.map(r => `
+    <tr>
+      <td>${r.name || "—"}</td>
+      <td><a class="phone-link" href="tel:${r.phone}">${r.phone || "—"}</a></td>
+      <td>${r.interest || "—"}</td>
+      <td>${r.source || "chatbot"}</td>
+      <td style="font-size:12px;color:var(--muted)">${fmtDate(r.created_at)}</td>
+    </tr>`).join("") :
+    `<tr><td colspan="5" class="empty-state">No leads captured yet</td></tr>`;
+}
+
+async function loadContacts() {
+  const res  = await fetch("/api/sales-contacts");
+  const rows = await res.json();
+  document.getElementById("contacts-body").innerHTML = rows.length ? rows.map(r => `
+    <tr>
+      <td>${r.name}</td>
+      <td style="font-family:var(--mono);font-size:12px">${r.email}</td>
+      <td style="color:var(--muted);font-size:12px">${r.role || "—"}</td>
+      <td>
+        <label class="toggle" title="${r.active ? 'Disable' : 'Enable'}">
+          <input type="checkbox" ${r.active ? "checked" : ""} onchange="toggleActive('${r.id}', this.checked)"/>
+          <span class="slider"></span>
+        </label>
+      </td>
+      <td>
+        <button class="btn btn-sm btn-danger" onclick="deleteContact('${r.id}')">Remove</button>
+      </td>
+    </tr>`).join("") :
+    `<tr><td colspan="5" class="empty-state">No sales contacts yet — add one above</td></tr>`;
+}
+
+async function addContact() {
+  const name  = document.getElementById("c-name").value.trim();
+  const email = document.getElementById("c-email").value.trim();
+  const role  = document.getElementById("c-role").value.trim() || "Sales";
+  if (!name || !email) { showAlert("err", "Name and email are required"); return; }
+  const res  = await fetch("/api/sales-contacts", {
+    method:  "POST",
+    headers: {"Content-Type":"application/json"},
+    body:    JSON.stringify({name, email, role})
+  });
+  const data = await res.json();
+  if (data.error) { showAlert("err", data.error); return; }
+  document.getElementById("c-name").value  = "";
+  document.getElementById("c-email").value = "";
+  document.getElementById("c-role").value  = "Sales";
+  document.getElementById("add-form").classList.remove("open");
+  showAlert("ok", `${name} added ✓`);
+  await loadContacts();
+}
+
+async function toggleActive(id, active) {
+  await fetch(`/api/sales-contacts/${id}`, {
+    method:  "PATCH",
+    headers: {"Content-Type":"application/json"},
+    body:    JSON.stringify({active})
+  });
+}
+
+async function deleteContact(id) {
+  if (!confirm("Remove this contact?")) return;
+  await fetch(`/api/sales-contacts/${id}`, {method:"DELETE"});
+  await loadContacts();
+}
+
+function toggleAddForm() {
+  document.getElementById("add-form").classList.toggle("open");
+}
+
+function showAlert(type, msg) {
+  const el = document.getElementById("contacts-alert");
+  el.textContent = msg;
+  el.className   = "alert " + type;
+  setTimeout(() => { el.className = "alert"; }, 4000);
+}
+
+function loadAll() { loadLeads(); loadContacts(); }
+
+/* Toggle style (reuse from tenants) */
+const style = document.createElement("style");
+style.textContent = `.toggle{position:relative;width:30px;height:17px;display:inline-block}.toggle input{opacity:0;width:0;height:0;position:absolute}.slider{position:absolute;inset:0;border-radius:9px;background:var(--border);cursor:pointer;transition:background .2s}.slider:before{content:'';position:absolute;width:11px;height:11px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .2s}.toggle input:checked+.slider{background:var(--success)}.toggle input:checked+.slider:before{transform:translateX(13px)}`;
+document.head.appendChild(style);
+
+loadAll();
+</script>
+<script src="/static/dashboard/auth.js"></script>
+</body>
+</html>
