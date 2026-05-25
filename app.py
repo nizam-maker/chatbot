@@ -630,6 +630,8 @@ async def widget_js(tenant: str = "", key: str = ""):
   ].join(';');
   iframe.setAttribute('allow', 'microphone');
   iframe.setAttribute('title', 'Chat widget');
+  iframe.setAttribute('allowtransparency', 'true');
+  iframe.setAttribute('frameborder', '0');
   document.body.appendChild(iframe);
 }})();"""
     return Response(content=js, media_type="application/javascript")
