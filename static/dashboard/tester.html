@@ -180,8 +180,18 @@ nav{padding:10px 8px;flex:1}
       <p>Test the bot and inspect retrieved knowledge chunks</p>
     </div>
     <div class="topbar-actions">
+      <div style="display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        <button id="tab-tester-btn" class="btn btn-sm" style="border:none;border-radius:0;background:var(--primary);color:#fff" onclick="switchTab('tester')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          Chat tester
+        </button>
+        <button id="tab-widget-btn" class="btn btn-sm" style="border:none;border-radius:0" onclick="switchTab('widget')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Widget preview
+        </button>
+      </div>
       <span style="font-size:12px;color:var(--muted)" id="session-label"></span>
-      <button class="btn btn-sm" onclick="clearChat()">
+      <button class="btn btn-sm" id="new-session-btn" onclick="clearChat()">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
         New session
       </button>
@@ -189,7 +199,47 @@ nav{padding:10px 8px;flex:1}
     </div>
   </div>
 
-  <div class="layout">
+  <!-- Widget preview panel -->
+  <div id="widget-preview" style="display:none;flex:1;overflow:hidden;position:relative">
+    <div style="height:100%;overflow-y:auto;background:#e8e8e8;padding:32px">
+      <div style="max-width:900px;margin:0 auto">
+        <!-- Fake browser chrome -->
+        <div style="background:#d0d0d0;border-radius:10px 10px 0 0;padding:10px 14px;display:flex;align-items:center;gap:8px">
+          <div style="width:12px;height:12px;border-radius:50%;background:#ff5f57"></div>
+          <div style="width:12px;height:12px;border-radius:50%;background:#febc2e"></div>
+          <div style="width:12px;height:12px;border-radius:50%;background:#28c840"></div>
+          <div style="flex:1;background:#fff;border-radius:5px;padding:4px 12px;font-size:12px;color:#666;margin:0 12px;font-family:monospace">lamanauto.com.my</div>
+          <button onclick="reloadWidget()" style="background:none;border:none;cursor:pointer;color:#666;font-size:11px;display:flex;align-items:center;gap:4px">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+            Reload widget
+          </button>
+        </div>
+        <!-- Fake page content -->
+        <div style="background:#fff;border-radius:0 0 10px 10px;min-height:580px;padding:40px 48px;position:relative;overflow:hidden">
+          <div style="width:180px;height:28px;background:#e0ede7;border-radius:6px;margin-bottom:32px"></div>
+          <div style="display:flex;gap:24px;margin-bottom:32px">
+            <div style="flex:1;height:200px;background:#f4f3ef;border-radius:8px"></div>
+            <div style="flex:1;height:200px;background:#f4f3ef;border-radius:8px"></div>
+            <div style="flex:1;height:200px;background:#f4f3ef;border-radius:8px"></div>
+          </div>
+          <div style="height:14px;background:#f4f3ef;border-radius:4px;margin-bottom:10px"></div>
+          <div style="height:14px;background:#f4f3ef;border-radius:4px;width:75%;margin-bottom:10px"></div>
+          <div style="height:14px;background:#f4f3ef;border-radius:4px;width:55%"></div>
+          <div style="position:absolute;inset:0;pointer-events:none" aria-hidden="true"></div>
+          <!-- The actual widget iframe -->
+          <iframe id="widget-iframe"
+            src="/embed/laman_auto"
+            style="position:absolute;bottom:0;right:0;width:420px;height:600px;border:none;background:transparent;pointer-events:all"
+            allow="microphone"
+            title="Chat widget preview">
+          </iframe>
+        </div>
+        <p style="font-size:11px;color:#999;text-align:center;margin-top:10px">This is a simulated page. The widget below is the real embed loaded from <code>/embed/laman_auto</code>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="tester-layout" class="layout">
 
     <!-- Chat -->
     <div class="chat-panel">
@@ -282,6 +332,24 @@ nav{padding:10px 8px;flex:1}
 
 <script>
 let sessionId = crypto.randomUUID();
+
+function switchTab(name) {
+  const isTester = name === 'tester';
+  document.getElementById('tester-layout').style.display  = isTester ? 'grid' : 'none';
+  document.getElementById('widget-preview').style.display = isTester ? 'none'  : 'flex';
+  document.getElementById('new-session-btn').style.display = isTester ? '' : 'none';
+  const tBtn = document.getElementById('tab-tester-btn');
+  const wBtn = document.getElementById('tab-widget-btn');
+  tBtn.style.background = isTester ? 'var(--primary)' : 'transparent';
+  tBtn.style.color      = isTester ? '#fff' : 'var(--text)';
+  wBtn.style.background = isTester ? 'transparent' : 'var(--primary)';
+  wBtn.style.color      = isTester ? 'var(--text)' : '#fff';
+}
+
+function reloadWidget() {
+  const iframe = document.getElementById('widget-iframe');
+  iframe.src = iframe.src;
+}
 document.getElementById("session-label").textContent = "Session: " + sessionId.slice(0,8) + "…";
 document.getElementById("m-sid").textContent = sessionId.slice(0,8) + "…";
 
