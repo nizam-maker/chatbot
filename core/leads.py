@@ -258,6 +258,11 @@ def process_lead_from_message(
         car_interest = car_interest,
     )
 
+    from core.analytics import track as track_event
+    track_event("lead_captured", tenant_id,
+                session_id=session.get("session_id", ""),
+                data={"car_interest": car_interest, "name": name})
+
     send_lead_email(
         name         = name,
         phone        = phone,

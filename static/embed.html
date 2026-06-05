@@ -270,7 +270,15 @@ function toggleChat() {
     const welcome = window._welcome || "Hello! How can I help?";
     addBubble(welcome.replace(/\n/g,"<br>"), "bot", true);
   }
+
+  // Tell parent widget to update pointer-events on the iframe
+  window.parent.postMessage(isOpen ? 'chat:opened' : 'chat:closed', '*');
 }
+
+// Listen for toggle command from parent widget trigger div
+window.addEventListener('message', function(e) {
+  if (e.data === 'toggle') toggleChat();
+});
 
 function now() {
   return new Date().toLocaleTimeString("en-MY",
