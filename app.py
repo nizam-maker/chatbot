@@ -614,6 +614,7 @@ async def widget_js(tenant: str = "", key: str = ""):
   var k = document.currentScript.dataset.key    || '{key}';
   var b = '{base_url}';
 
+  // Iframe covers the corner but is non-interactive — clicks pass through
   var iframe = document.createElement('iframe');
   iframe.src = b + '/embed/' + t + '?key=' + k + '&tenant=' + t;
   iframe.id  = 'chatplatform-widget';
@@ -624,16 +625,43 @@ async def widget_js(tenant: str = "", key: str = ""):
     'width:420px',
     'height:600px',
     'border:none',
-    'z-index:2147483647',
+    'z-index:2147483646',
     'background:transparent',
     'background-color:transparent',
-    'pointer-events:all'
+    'pointer-events:none'
   ].join(';');
   iframe.setAttribute('allow', 'microphone');
   iframe.setAttribute('title', 'Chat widget');
   iframe.setAttribute('allowtransparency', 'true');
   iframe.setAttribute('frameborder', '0');
   document.body.appendChild(iframe);
+
+  // Invisible trigger div sits over the bubble button area
+  var trigger = document.createElement('div');
+  trigger.id = 'chatplatform-trigger';
+  trigger.style.cssText = [
+    'position:fixed',
+    'bottom:20px',
+    'right:20px',
+    'width:52px',
+    'height:52px',
+    'border-radius:50%',
+    'z-index:2147483647',
+    'cursor:pointer',
+    'pointer-events:all',
+    'background:transparent'
+  ].join(';');
+  trigger.addEventListener('click', function(){{
+    iframe.style.pointerEvents = 'all';
+    iframe.contentWindow.postMessage('toggle', '*');
+  }});
+  document.body.appendChild(trigger);
+
+  // When the chat closes, hand pointer-events back to the trigger
+  window.addEventListener('message', function(e){{
+    if (e.data === 'chat:closed') iframe.style.pointerEvents = 'none';
+    if (e.data === 'chat:opened') iframe.style.pointerEvents = 'all';
+  }});
 }})();"""
     return Response(content=js, media_type="application/javascript")
 
@@ -696,4 +724,27 @@ async def update_sales_contact(contact_id: str, req: Request):
 async def delete_sales_contact(contact_id: str):
     from core.supabase_client import sb
     sb.table("sales_contacts").delete().eq("id", contact_id).execute()
+    return {"status": "ok"}
+
+# ── Analytics API routes — paste into app.py ─────────────────
+# Add these after the existing dashboard stats API section
+
+@app.get("/api/analytics/stats")
+async def analytics_stats(days: int = 30):
+    from core.analytics import get_stats
+    return get_stats(TENANT, days)
+
+
+@app.post("/api/analytics/event")
+async def analytics_event(req: Request):
+    """Manual event tracking endpoint (called from frontend if needed)."""
+    from core.analytics import track
+    body = await req.json()
+    track(
+        event_type  = body.get("event_type", ""),
+        tenant_id   = TENANT,
+        session_id  = body.get("session_id", ""),
+        customer_id = body.get("customer_id", ""),
+        data        = body.get("data", {}),
+    )
     return {"status": "ok"}

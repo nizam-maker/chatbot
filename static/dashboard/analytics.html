@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Analytics — ChatPlatform</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1a6f4a;--primary-h:#145a3c;
+  --bg:#f4f3ef;--surface:#fff;--border:#e2e0d8;
+  --text:#1c1c1a;--muted:#7a7870;
+  --success:#1D9E75;--danger:#E24B4A;--warning:#EF9F27;--info:#3B7DD8;
+  --font:"Segoe UI",system-ui,sans-serif;--radius:10px;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+
+/* Sidebar */
+.sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+.sidebar-logo{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;border-radius:8px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700}
+.logo-text{font-size:14px;font-weight:600}.logo-sub{font-size:11px;color:var(--muted)}
+nav{padding:10px 8px;flex:1}
+.nav-section{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:10px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;text-decoration:none;margin-bottom:1px}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:#e8f4ee;color:var(--primary);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+.tenant-badge{display:inline-flex;align-items:center;gap:5px;background:#e8f4ee;color:var(--primary);padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500;margin-top:4px}
+.dot-live{width:6px;height:6px;border-radius:50%;background:var(--success);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px}
+.topbar h1{font-size:16px;font-weight:600}.topbar p{font-size:13px;color:var(--muted)}
+.topbar-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;background:transparent;color:var(--text);cursor:pointer;transition:all .15s}
+.btn:hover{background:var(--bg)}.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-h)}
+.btn.active-period{background:var(--primary);color:#fff;border-color:var(--primary)}
+.content{flex:1;overflow-y:auto;padding:24px}
+
+/* KPI cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;border-radius:var(--radius) 0 0 var(--radius)}
+.kpi-card.green::before{background:var(--success)}
+.kpi-card.blue::before{background:var(--info)}
+.kpi-card.amber::before{background:var(--warning)}
+.kpi-card.red::before{background:var(--danger)}
+.kpi-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px}
+.kpi-val{font-size:28px;font-weight:700;line-height:1;margin-bottom:4px}
+.kpi-card.green .kpi-val{color:var(--success)}
+.kpi-card.blue  .kpi-val{color:var(--info)}
+.kpi-card.amber .kpi-val{color:var(--warning)}
+.kpi-card.red   .kpi-val{color:var(--danger)}
+.kpi-sub{font-size:12px;color:var(--muted)}
+
+/* Charts grid */
+.charts-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.card-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:600}
+.card-sub{font-size:12px;color:var(--muted)}
+.card-body{padding:18px}
+.chart-wrap{position:relative;height:220px}
+
+/* Top cars list */
+.car-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.car-row:last-child{border-bottom:none}
+.car-rank{width:20px;font-size:12px;font-weight:600;color:var(--muted);flex-shrink:0;text-align:center}
+.car-name{flex:1;font-size:13px;font-weight:500}
+.car-bar-wrap{width:100px;height:6px;background:var(--bg);border-radius:3px;overflow:hidden}
+.car-bar{height:100%;background:var(--primary);border-radius:3px;transition:width .5s ease}
+.car-count{font-size:12px;color:var(--muted);width:28px;text-align:right;flex-shrink:0}
+
+/* Bottom grid */
+.bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* Conversion funnel */
+.funnel-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.funnel-row:last-child{border-bottom:none}
+.funnel-label{font-size:13px;flex:1}
+.funnel-bar-wrap{width:140px;height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.funnel-bar{height:100%;border-radius:4px;transition:width .6s ease}
+.funnel-num{font-size:13px;font-weight:600;width:40px;text-align:right}
+.funnel-pct{font-size:11px;color:var(--muted);width:36px;text-align:right}
+
+/* Empty state */
+.empty-hint{text-align:center;padding:32px;color:var(--muted);font-size:13px}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">CP</div>
+    <div><div class="logo-text">ChatPlatform</div><div class="logo-sub">Management dashboard</div></div>
+  </div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <a href="/dashboard" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a href="/dashboard/analytics" class="nav-item active">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Analytics
+    </a>
+    <div class="nav-section">Knowledge</div>
+    <a href="/dashboard/files" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      File manager
+    </a>
+    <a href="/dashboard/scraper" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+      Scraper manager
+    </a>
+    <div class="nav-section">Leads</div>
+    <a href="/dashboard/leads" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Sales contacts
+    </a>
+    <div class="nav-section">Chat</div>
+    <a href="/dashboard/tester" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Chat tester
+    </a>
+    <a href="/chat" class="nav-item" target="_blank">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Live chatbot
+    </a>
+    <div class="nav-section">Platform</div>
+    <a href="/dashboard/tenants" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Tenants
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div>Signed in as</div>
+    <div style="font-weight:500;margin-top:2px">Admin</div>
+    <div class="tenant-badge"><div class="dot-live"></div>Laman Auto</div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1>Analytics</h1>
+      <p>Conversations, leads and car interest insights</p>
+    </div>
+    <div class="topbar-actions">
+      <div style="display:flex;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:3px">
+        <button class="btn active-period" id="btn-7"  onclick="setPeriod(7)"  style="padding:5px 10px;font-size:12px;border:none">7d</button>
+        <button class="btn" id="btn-30" onclick="setPeriod(30)" style="padding:5px 10px;font-size:12px;border:none">30d</button>
+        <button class="btn" id="btn-90" onclick="setPeriod(90)" style="padding:5px 10px;font-size:12px;border:none">90d</button>
+      </div>
+      <button class="btn" onclick="loadStats()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- KPI cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card green">
+        <div class="kpi-label">Total sessions</div>
+        <div class="kpi-val" id="k-sessions"><span class="spinner"></span></div>
+        <div class="kpi-sub">unique conversations</div>
+      </div>
+      <div class="kpi-card blue">
+        <div class="kpi-label">Messages sent</div>
+        <div class="kpi-val" id="k-messages">—</div>
+        <div class="kpi-sub">user messages</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-label">Leads captured</div>
+        <div class="kpi-val" id="k-leads">—</div>
+        <div class="kpi-sub">contacts collected</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-label">Conversion rate</div>
+        <div class="kpi-val" id="k-conversion">—</div>
+        <div class="kpi-sub">sessions → leads</div>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="charts-grid">
+
+      <!-- Line chart — activity over time -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Activity over time</span>
+          <span class="card-sub" id="chart-period-label">Last 7 days</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap">
+            <canvas id="activity-chart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top cars -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Most asked cars</span>
+          <span class="card-sub">by query count</span>
+        </div>
+        <div class="card-body" id="top-cars-list">
+          <div class="empty-hint"><span class="spinner"></span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom row -->
+    <div class="bottom-grid">
+
+      <!-- Conversion funnel -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Conversion funnel</span>
+          <span class="card-sub">sessions → leads</span>
+        </div>
+        <div class="card-body" id="funnel-body">
+          <div class="empty-hint"><span class="spinner"></span></div>
+        </div>
+      </div>
+
+      <!-- Lead chart — bar -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Daily leads</span>
+          <span class="card-sub">leads captured per day</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap">
+            <canvas id="leads-chart"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+let activePeriod  = 7;
+let activityChart = null;
+let leadsChart    = null;
+
+function setPeriod(days) {
+  activePeriod = days;
+  document.querySelectorAll('.topbar-actions .btn').forEach(b => b.classList.remove('active-period'));
+  document.getElementById('btn-' + days)?.classList.add('active-period');
+  document.getElementById('chart-period-label').textContent =
+    days === 7 ? 'Last 7 days' : days === 30 ? 'Last 30 days' : 'Last 90 days';
+  loadStats();
+}
+
+async function loadStats() {
+  try {
+    const res  = await fetch(`/api/analytics/stats?days=${activePeriod}`);
+    const data = await res.json();
+    renderKPIs(data);
+    renderActivityChart(data.daily_chart);
+    renderTopCars(data.top_cars);
+    renderFunnel(data);
+    renderLeadsChart(data.daily_chart);
+  } catch(e) {
+    console.error('[analytics] Load failed:', e);
+  }
+}
+
+function renderKPIs(data) {
+  document.getElementById('k-sessions').textContent   = data.total_sessions.toLocaleString();
+  document.getElementById('k-messages').textContent   = data.total_messages.toLocaleString();
+  document.getElementById('k-leads').textContent      = data.total_leads.toLocaleString();
+  document.getElementById('k-conversion').textContent = data.conversion_rate + '%';
+}
+
+function renderActivityChart(daily) {
+  // Slice to period
+  const slice  = daily.slice(-activePeriod);
+  const labels = slice.map(d => {
+    const dt = new Date(d.date);
+    return dt.toLocaleDateString('en-MY', {month:'short', day:'numeric'});
+  });
+
+  const cfg = {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label:       'Sessions',
+          data:        slice.map(d => d.sessions),
+          borderColor: '#1a6f4a',
+          backgroundColor: 'rgba(26,111,74,0.08)',
+          fill:        true,
+          tension:     0.4,
+          pointRadius: 3,
+          pointBackgroundColor: '#1a6f4a',
+        },
+        {
+          label:       'Messages',
+          data:        slice.map(d => d.messages),
+          borderColor: '#3B7DD8',
+          backgroundColor: 'rgba(59,125,216,0.06)',
+          fill:        true,
+          tension:     0.4,
+          pointRadius: 3,
+          pointBackgroundColor: '#3B7DD8',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 10 } }
+      },
+      scales: {
+        x: { grid: { color: '#f0ede8' }, ticks: { font: { size: 11 }, color: '#7a7870' } },
+        y: { grid: { color: '#f0ede8' }, ticks: { font: { size: 11 }, color: '#7a7870' }, beginAtZero: true }
+      }
+    }
+  };
+
+  if (activityChart) activityChart.destroy();
+  activityChart = new Chart(document.getElementById('activity-chart'), cfg);
+}
+
+function renderTopCars(cars) {
+  const el  = document.getElementById('top-cars-list');
+  if (!cars.length) {
+    el.innerHTML = '<div class="empty-hint">No car queries yet — start chatting!</div>';
+    return;
+  }
+  const max = cars[0].count;
+  el.innerHTML = cars.map((c, i) => `
+    <div class="car-row">
+      <div class="car-rank">${i + 1}</div>
+      <div class="car-name">${c.name}</div>
+      <div class="car-bar-wrap">
+        <div class="car-bar" style="width:${Math.round(c.count/max*100)}%"></div>
+      </div>
+      <div class="car-count">${c.count}</div>
+    </div>`).join('');
+}
+
+function renderFunnel(data) {
+  const el = document.getElementById('funnel-body');
+  const s  = data.total_sessions;
+  const m  = data.total_messages;
+  const l  = data.total_leads;
+
+  const rows = [
+    { label: 'Sessions started',  val: s, color: '#1a6f4a', pct: 100 },
+    { label: 'Messages sent',     val: m, color: '#3B7DD8', pct: s ? Math.min(100, Math.round(m/s*10)) : 0 },
+    { label: 'Leads captured',    val: l, color: '#EF9F27', pct: s ? Math.round(l/s*100) : 0 },
+  ];
+
+  el.innerHTML = rows.map(r => `
+    <div class="funnel-row">
+      <div class="funnel-label">${r.label}</div>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar" style="width:${r.pct}%;background:${r.color}"></div>
+      </div>
+      <div class="funnel-num">${r.val.toLocaleString()}</div>
+      <div class="funnel-pct">${r.pct}%</div>
+    </div>`).join('');
+}
+
+function renderLeadsChart(daily) {
+  const slice  = daily.slice(-activePeriod);
+  const labels = slice.map(d => {
+    const dt = new Date(d.date);
+    return dt.toLocaleDateString('en-MY', {month:'short', day:'numeric'});
+  });
+
+  const cfg = {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label:           'Leads',
+        data:            slice.map(d => d.leads),
+        backgroundColor: 'rgba(239,159,39,0.75)',
+        borderColor:     '#EF9F27',
+        borderWidth:     1,
+        borderRadius:    4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#7a7870' } },
+        y: { grid: { color: '#f0ede8' }, ticks: { font: { size: 11 }, color: '#7a7870' }, beginAtZero: true, stepSize: 1 }
+      }
+    }
+  };
+
+  if (leadsChart) leadsChart.destroy();
+  leadsChart = new Chart(document.getElementById('leads-chart'), cfg);
+}
+
+// Initial load
+loadStats();
+</script>
+<script src="/static/dashboard/auth.js"></script>
+</body>
+</html>

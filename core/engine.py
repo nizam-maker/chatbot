@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 
 from core.memory import load_session, save_session, add_message
 from core.ingest import retrieve
+from core.analytics import track
 
 load_dotenv()
 
@@ -182,12 +183,34 @@ def chat(
     session["tenant_id"]   = tenant_id
     session["customer_id"] = customer_id
 
+    if not session.get("messages"):
+        track("chat_start", tenant_id, session_id=session_id,
+              customer_id=customer_id, data={"source": "widget"})
+
+    track("message_sent", tenant_id,
+          session_id=session_id,
+          customer_id=customer_id,
+          data={"question": user_msg[:200]})
+
     # 2. Retrieve relevant knowledge chunks from ChromaDB
     chunks  = retrieve(user_msg, tenant_id, tenant_cfg["DOMAINS"], n=4)
     context = "\n\n".join(chunks) if chunks else ""
 
     # 3. Query structured DB (Supabase) for prices, stock, rebates
     db_context = _db_context(user_msg)
+
+    if db_context:
+        for brand in ["Perodua", "Proton", "Honda", "Toyota"]:
+            if brand.lower() in user_msg.lower():
+                for model in ["Axia", "Myvi", "Bezza", "Ativa", "Alza",
+                              "Saga", "X50", "X70", "S70",
+                              "City", "HR-V", "Civic",
+                              "Vios", "Yaris", "Veloz"]:
+                    if model.lower() in user_msg.lower():
+                        track("car_queried", tenant_id,
+                              session_id=session_id,
+                              data={"brand": brand, "model": model})
+                        break
 
     # 4. Check for lead capture opportunity
     from core.leads import (
