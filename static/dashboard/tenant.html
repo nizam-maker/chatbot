@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard — ChatPlatform</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1a6f4a;--primary-h:#145a3c;
+  --bg:#f4f3ef;--surface:#fff;--border:#e2e0d8;
+  --text:#1c1c1a;--muted:#7a7870;
+  --success:#1D9E75;--danger:#E24B4A;--warning:#EF9F27;--info:#3B7DD8;
+  --font:"Segoe UI",system-ui,sans-serif;--radius:10px;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+.sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+.sidebar-logo{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;border-radius:8px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700}
+.logo-text{font-size:14px;font-weight:600}.logo-sub{font-size:11px;color:var(--muted)}
+nav{padding:10px 8px;flex:1}
+.nav-section{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:10px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;text-decoration:none;margin-bottom:1px}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:#e8f4ee;color:var(--primary);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px}
+.topbar h1{font-size:16px;font-weight:600}.topbar p{font-size:13px;color:var(--muted)}
+.topbar-actions{margin-left:auto;display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;background:transparent;color:var(--text);cursor:pointer;transition:all .15s;text-decoration:none}
+.btn:hover{background:var(--bg)}.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-h)}
+.content{flex:1;overflow-y:auto;padding:24px}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.stat-label{font-size:12px;color:var(--muted);margin-bottom:6px}
+.stat-val{font-size:24px;font-weight:600;color:var(--text)}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.stat-card.green .stat-val{color:var(--success)}
+.stat-card.amber .stat-val{color:var(--warning)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
+.card-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:500}
+.card-body{padding:14px 16px}
+.card-link{font-size:12px;color:var(--primary);text-decoration:none}
+.card-link:hover{text-decoration:underline}
+
+.quick-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.qa-btn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);cursor:pointer;transition:all .15s;text-decoration:none;color:var(--text)}
+.qa-btn:hover{border-color:var(--primary);background:#f0faf5}
+.qa-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.qa-label{font-size:12px;font-weight:500;text-align:center}
+
+@media(max-width:800px){.sidebar{display:none}.quick-actions{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body data-roles="tenant,admin">
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark" id="s-initials">CP</div>
+    <div><div class="logo-text" id="s-name">My Dashboard</div><div class="logo-sub">ChatPlatform</div></div>
+  </div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <a href="/dashboard/tenant" class="nav-item active">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <div class="nav-section">My Chatbot</div>
+    <a href="/dashboard/tenant/analytics" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Analytics
+    </a>
+    <a href="/dashboard/tenant/leads" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      My Leads
+    </a>
+    <a href="/dashboard/tenant/inventory" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      Inventory Data
+    </a>
+    <div class="nav-section">Knowledge</div>
+    <a href="/dashboard/tenant/files" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      File manager
+    </a>
+    <a href="/dashboard/tenant/scraper" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20"/></svg>
+      Scraper
+    </a>
+    <div class="nav-section">Settings</div>
+    <a href="/dashboard/tenant/api" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+      API Manager
+    </a>
+  </nav>
+  <div class="sidebar-footer"></div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1>Dashboard</h1>
+      <p id="topbar-sub">Your chatbot overview</p>
+    </div>
+    <div class="topbar-actions">
+      <a href="/chat" target="_blank" class="btn btn-primary">Open live bot ↗</a>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="stats" id="stats">
+      <div class="stat-card">
+        <div class="stat-label">Chat sessions</div>
+        <div class="stat-val" id="s-sessions">—</div>
+        <div class="stat-sub">last 30 days</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Messages</div>
+        <div class="stat-val" id="s-messages">—</div>
+        <div class="stat-sub">last 30 days</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Leads captured</div>
+        <div class="stat-val" id="s-leads">—</div>
+        <div class="stat-sub">last 30 days</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label">Conversion rate</div>
+        <div class="stat-val" id="s-conversion">—</div>
+        <div class="stat-sub">leads / sessions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Knowledge files</div>
+        <div class="stat-val" id="s-files">—</div>
+        <div class="stat-sub">active documents</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Scraper URLs</div>
+        <div class="stat-val" id="s-urls">—</div>
+        <div class="stat-sub">configured</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">Quick actions</span>
+      </div>
+      <div class="card-body">
+        <div class="quick-actions">
+          <a href="/dashboard/tenant/files" class="qa-btn">
+            <div class="qa-icon" style="background:#e8f4ee">
+              <svg width="18" height="18" fill="none" stroke="#1a6f4a" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <span class="qa-label">Upload document</span>
+          </a>
+          <a href="/dashboard/tenant/scraper" class="qa-btn">
+            <div class="qa-icon" style="background:#faeeda">
+              <svg width="18" height="18" fill="none" stroke="#EF9F27" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20"/></svg>
+            </div>
+            <span class="qa-label">Run scraper</span>
+          </a>
+          <a href="/dashboard/tenant/leads" class="qa-btn">
+            <div class="qa-icon" style="background:#e8effe">
+              <svg width="18" height="18" fill="none" stroke="#3B7DD8" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            </div>
+            <span class="qa-label">View leads</span>
+          </a>
+          <a href="/chat" target="_blank" class="qa-btn">
+            <div class="qa-icon" style="background:#eeedfe">
+              <svg width="18" height="18" fill="none" stroke="#534AB7" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            </div>
+            <span class="qa-label">Open chatbot</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">Top car queries</span>
+        <a href="/dashboard/tenant/analytics" class="card-link">view analytics →</a>
+      </div>
+      <div class="card-body" id="top-cars">
+        <div style="font-size:13px;color:var(--muted)">Loading...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let tenantId = null;
+
+async function init() {
+  await new Promise(r => setTimeout(r, 300));
+  const profile = window._profile;
+  if (!profile?.tenant_id) return;
+  tenantId = profile.tenant_id;
+
+  const t = await fetch(`/api/tenants/${tenantId}`).then(r => r.json());
+  document.getElementById("s-initials").textContent      = t.brand_initials || "CP";
+  document.getElementById("s-initials").style.background = t.brand_color || "#1a6f4a";
+  document.getElementById("s-name").textContent          = t.name || "My Dashboard";
+  document.getElementById("topbar-sub").textContent      = `${t.name} — chatbot overview`;
+  document.documentElement.style.setProperty("--primary", t.brand_color || "#1a6f4a");
+
+  await loadStats();
+}
+
+async function loadStats() {
+  const [analytics, files, urls] = await Promise.all([
+    authedFetch(`/api/tenant/${tenantId}/analytics`).then(r => r.json()),
+    authedFetch(`/api/tenant/${tenantId}/files`).then(r => r.json()),
+    authedFetch(`/api/tenant/${tenantId}/scraper/urls`).then(r => r.json()),
+  ]);
+
+  document.getElementById("s-sessions").textContent   = analytics.total_sessions ?? "—";
+  document.getElementById("s-messages").textContent   = analytics.total_messages ?? "—";
+  document.getElementById("s-leads").textContent      = analytics.total_leads ?? "—";
+  document.getElementById("s-conversion").textContent = (analytics.conversion_rate ?? 0) + "%";
+  document.getElementById("s-files").textContent      = (files || []).filter(f => f.is_enabled).length;
+  document.getElementById("s-urls").textContent       = (urls || []).length;
+
+  const topCarsEl = document.getElementById("top-cars");
+  const topCars   = analytics.top_cars || [];
+  if (topCars.length) {
+    topCarsEl.innerHTML = topCars.map(c => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <span>${c.name}</span>
+        <span style="color:var(--muted)">${c.count} queries</span>
+      </div>`).join("");
+  } else {
+    topCarsEl.innerHTML = '<div style="font-size:13px;color:var(--muted)">No car queries yet</div>';
+  }
+}
+
+init();
+</script>
+<script src="/static/dashboard/auth.js"></script>
+</body>
+</html>

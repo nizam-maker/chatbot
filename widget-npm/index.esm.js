@@ -24,6 +24,9 @@ export function initWidget({ tenant, key, base = DEFAULT_BASE, position = 'botto
 
   const iframe = document.createElement('iframe');
   iframe.id    = 'chatplatform-widget';
+  iframe.allowTransparency = true;
+  iframe.setAttribute('allowtransparency', 'true');
+  iframe.setAttribute('frameborder', '0');
   iframe.src   = `${base}/embed/${tenant}?key=${key}&tenant=${tenant}`;
   iframe.title = 'Chat widget';
   iframe.setAttribute('allow', 'microphone');
@@ -36,7 +39,8 @@ export function initWidget({ tenant, key, base = DEFAULT_BASE, position = 'botto
     `right:${right}`, `left:${left}`,
     'width:420px', 'height:600px',
     'border:none', 'z-index:2147483647',
-    'background:transparent', 'pointer-events:all'
+    'background:transparent', 'background-color:transparent',
+    'pointer-events:all'
   ].join(';');
 
   document.body.appendChild(iframe);

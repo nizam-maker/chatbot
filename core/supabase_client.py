@@ -19,12 +19,21 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 sb: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
+def maybe_single(query):
+    """
+    Execute a query built with .maybe_single() and return its .data,
+    or None if no row matched. Needed because postgrest-py returns None
+    (not a response object) from .execute() when zero rows match.
+    """
+    res = query.maybe_single().execute()
+    return res.data if res else None
+
+
 # ── Tenant helpers ────────────────────────────────────────────
 
 def get_tenant(slug: str) -> dict | None:
     """Get tenant config by slug."""
-    res = sb.table("tenants").select("*").eq("slug", slug).single().execute()
-    return res.data
+    return maybe_single(sb.table("tenants").select("*").eq("slug", slug))
 
 
 def get_all_tenants() -> list:
@@ -161,13 +170,12 @@ def get_chat_sessions(tenant_id: str, limit: int = 50) -> list:
 
 def validate_api_key(key_value: str) -> dict | None:
     """Validate a public API key and return the tenant."""
-    res = sb.table("api_keys")\
-        .select("*, tenants(*)")\
-        .eq("key_value", key_value)\
-        .eq("is_active", True)\
-        .single()\
-        .execute()
-    return res.data
+    return maybe_single(
+        sb.table("api_keys")
+          .select("*, tenants(*)")
+          .eq("key_value", key_value)
+          .eq("is_active", True)
+    )
 
 
 def generate_api_key(tenant_id: str, key_type: str = "public") -> str:

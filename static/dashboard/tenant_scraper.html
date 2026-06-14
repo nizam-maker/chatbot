@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Scraper Manager — ChatPlatform</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1a6f4a;--primary-h:#145a3c;
+  --bg:#f4f3ef;--surface:#fff;--border:#e2e0d8;
+  --text:#1c1c1a;--muted:#7a7870;
+  --success:#1D9E75;--danger:#E24B4A;--warning:#EF9F27;--info:#3B7DD8;
+  --font:"Segoe UI",system-ui,sans-serif;--radius:10px;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+.sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+.sidebar-logo{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;border-radius:8px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700}
+.logo-text{font-size:14px;font-weight:600}.logo-sub{font-size:11px;color:var(--muted)}
+nav{padding:10px 8px;flex:1}
+.nav-section{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:10px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;text-decoration:none;margin-bottom:1px}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:#e8f4ee;color:var(--primary);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px}
+.topbar h1{font-size:16px;font-weight:600}.topbar p{font-size:13px;color:var(--muted)}
+.topbar-actions{margin-left:auto;display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;background:transparent;color:var(--text);cursor:pointer;transition:all .15s;text-decoration:none}
+.btn:hover{background:var(--bg)}.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-h)}
+.btn-danger{color:var(--danger);border-color:var(--danger)}
+.btn-danger:hover{background:#fce8e8}
+.btn-sm{padding:4px 8px;font-size:12px}
+.content{flex:1;overflow-y:auto;padding:24px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.stat-label{font-size:12px;color:var(--muted);margin-bottom:4px}
+.stat-val{font-size:22px;font-weight:600}
+.stat-val.green{color:var(--success)}.stat-val.red{color:var(--danger)}.stat-val.amber{color:var(--warning)}
+.add-form{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+.add-form-title{font-size:13px;font-weight:500;margin-bottom:12px}
+.add-form-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:8px;align-items:end}
+.field label{font-size:11px;color:var(--muted);font-weight:500;display:block;margin-bottom:3px}
+.field input,.field select{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--bg);color:var(--text);outline:none}
+.field input:focus,.field select:focus{border-color:var(--primary)}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.table-toolbar{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.table-toolbar input{flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--bg);outline:none}
+table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+th{text-align:left;padding:8px 12px;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--border);background:var(--bg)}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf9}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;border:1px solid}
+.badge-ok{background:#e8f4ee;color:var(--success);border-color:#5dcaa5}
+.badge-fail{background:#fce8e8;color:var(--danger);border-color:#f08080}
+.badge-warn{background:#faeeda;color:var(--warning);border-color:#efb347}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dot-ok{background:var(--success)}.dot-fail{background:var(--danger)}.dot-warn{background:var(--warning)}
+.toggle{position:relative;width:30px;height:17px;display:inline-block}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.slider{position:absolute;inset:0;border-radius:9px;background:var(--border);cursor:pointer;transition:background .2s}
+.slider:before{content:'';position:absolute;width:11px;height:11px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .2s}
+.toggle input:checked+.slider{background:var(--success)}
+.toggle input:checked+.slider:before{transform:translateX(13px)}
+.empty-state{padding:40px;text-align:center;color:var(--muted);font-size:13px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:10px 16px;border-radius:9px;font-size:13px;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;z-index:999}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok{background:var(--success)}.toast.err{background:var(--danger)}
+</style>
+</head>
+<body data-roles="tenant,admin">
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark" id="s-initials">CP</div>
+    <div><div class="logo-text" id="s-name">My Dashboard</div><div class="logo-sub">ChatPlatform</div></div>
+  </div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <a href="/dashboard/tenant" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <div class="nav-section">My Chatbot</div>
+    <a href="/dashboard/tenant/analytics" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Analytics
+    </a>
+    <a href="/dashboard/tenant/leads" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      My Leads
+    </a>
+    <a href="/dashboard/tenant/inventory" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      Inventory Data
+    </a>
+    <div class="nav-section">Knowledge</div>
+    <a href="/dashboard/tenant/files" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      File manager
+    </a>
+    <a href="/dashboard/tenant/scraper" class="nav-item active">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20"/></svg>
+      Scraper
+    </a>
+    <div class="nav-section">Settings</div>
+    <a href="/dashboard/tenant/api" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+      API Manager
+    </a>
+  </nav>
+  <div class="sidebar-footer"></div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1>Scraper manager</h1>
+      <p id="topbar-sub">Manage URLs for automated website scraping</p>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn" onclick="loadURLs()">Refresh</button>
+      <button class="btn btn-primary" onclick="runAll()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Run all now
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="stats">
+      <div class="stat-card"><div class="stat-label">Total URLs</div><div class="stat-val" id="s-total">—</div></div>
+      <div class="stat-card"><div class="stat-label">Success</div><div class="stat-val green" id="s-ok">—</div></div>
+      <div class="stat-card"><div class="stat-label">Failed</div><div class="stat-val red" id="s-fail">—</div></div>
+      <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-val amber" id="s-pending">—</div></div>
+    </div>
+
+    <div class="add-form">
+      <div class="add-form-title">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px;margin-right:5px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add new URL
+      </div>
+      <div class="add-form-grid">
+        <div class="field"><label>URL</label><input type="text" id="f-url" placeholder="https://..."/></div>
+        <div class="field"><label>Brand</label><input type="text" id="f-brand" placeholder="Perodua"/></div>
+        <div class="field"><label>Model</label><input type="text" id="f-model" placeholder="Myvi"/></div>
+        <div class="field"><label>Domain</label>
+          <select id="f-domain">
+            <option value="car_specs">car_specs</option>
+            <option value="rebates_promos">rebates_promos</option>
+            <option value="faq_support">faq_support</option>
+            <option value="surat_khabar">surat_khabar</option>
+          </select>
+        </div>
+        <div class="field"><label>&nbsp;</label><button class="btn btn-primary" onclick="addURL()">Add URL</button></div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <input type="text" id="search" placeholder="Search URLs..." oninput="renderTable()"/>
+        <span style="font-size:12px;color:var(--muted)" id="row-count"></span>
+      </div>
+      <table>
+        <colgroup><col style="width:5%"><col style="width:30%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:12%"><col style="width:8%"></colgroup>
+        <thead><tr><th>On</th><th>URL</th><th>Brand / Model</th><th>Domain</th><th>Status</th><th>Last scraped</th><th></th></tr></thead>
+        <tbody id="tbody"><tr><td colspan="7" class="empty-state"><span class="spinner"></span> Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let allURLs  = [];
+let tenantId = null;
+
+function statusBadge(s) {
+  if (s==="ok")   return `<span class="badge badge-ok"><span class="dot dot-ok"></span>ok</span>`;
+  if (s==="fail") return `<span class="badge badge-fail"><span class="dot dot-fail"></span>fail</span>`;
+  return `<span class="badge badge-warn"><span class="dot dot-warn"></span>pending</span>`;
+}
+
+async function init() {
+  await new Promise(r => setTimeout(r, 300));
+  const profile = window._profile;
+  if (!profile?.tenant_id) return;
+  tenantId = profile.tenant_id;
+
+  const t = await fetch(`/api/tenants/${tenantId}`).then(r => r.json());
+  document.getElementById("s-initials").textContent      = t.brand_initials || "CP";
+  document.getElementById("s-initials").style.background = t.brand_color || "#1a6f4a";
+  document.getElementById("s-name").textContent          = t.name || "My Dashboard";
+  document.getElementById("topbar-sub").textContent      = `${t.name} — scraper manager`;
+  document.documentElement.style.setProperty("--primary", t.brand_color || "#1a6f4a");
+
+  await loadURLs();
+}
+
+async function loadURLs() {
+  if (!tenantId) return;
+  const res = await authedFetch(`/api/tenant/${tenantId}/scraper/urls`);
+  allURLs   = await res.json();
+  renderTable();
+}
+
+function renderTable() {
+  const q = document.getElementById("search").value.toLowerCase();
+  const rows = allURLs.filter(u =>
+    !q || `${u.url} ${u.brand} ${u.model}`.toLowerCase().includes(q)
+  );
+
+  document.getElementById("row-count").textContent = `${rows.length} of ${allURLs.length} URLs`;
+  document.getElementById("s-total").textContent   = allURLs.length;
+  document.getElementById("s-ok").textContent      = allURLs.filter(u=>u.last_status==="ok").length;
+  document.getElementById("s-fail").textContent    = allURLs.filter(u=>u.last_status==="fail").length;
+  document.getElementById("s-pending").textContent = allURLs.filter(u=>!u.last_status||u.last_status==="pending").length;
+
+  const tbody = document.getElementById("tbody");
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-state">No URLs yet — add your first scraper URL above</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(u => `
+    <tr>
+      <td>
+        <label class="toggle">
+          <input type="checkbox" ${u.is_enabled?"checked":""}
+            onchange="toggleURL('${u.id}', this.checked)">
+          <span class="slider"></span>
+        </label>
+      </td>
+      <td style="font-size:12px;color:var(--muted)" title="${u.url}">${u.url}</td>
+      <td style="font-weight:500">${u.brand||""} ${u.model||""}</td>
+      <td><span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;background:#e8f4ee;color:#085041">${u.domain}</span></td>
+      <td>${statusBadge(u.last_status||"pending")}</td>
+      <td style="font-size:12px;color:var(--muted)">${u.last_scraped ? new Date(u.last_scraped).toLocaleDateString("en-MY") : "never"}</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-sm" onclick="runOne('${u.id}')" title="Run">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="deleteURL('${u.id}')" title="Delete">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`).join("");
+}
+
+async function addURL() {
+  const url    = document.getElementById("f-url").value.trim();
+  const brand  = document.getElementById("f-brand").value.trim();
+  const model  = document.getElementById("f-model").value.trim();
+  const domain = document.getElementById("f-domain").value;
+  if (!url) { document.getElementById("f-url").focus(); return; }
+
+  const res  = await authedFetch(`/api/tenant/${tenantId}/scraper/urls`, {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({url, brand, model, domain})
+  });
+  const data = await res.json();
+  if (data.id) {
+    document.getElementById("f-url").value   = "";
+    document.getElementById("f-brand").value = "";
+    document.getElementById("f-model").value = "";
+    toast("URL added ✓", "ok");
+    await loadURLs();
+  } else { toast("Failed to add URL", "err"); }
+}
+
+async function deleteURL(id) {
+  if (!confirm("Delete this URL?")) return;
+  await authedFetch(`/api/tenant/${tenantId}/scraper/urls/${id}`, {method:"DELETE"});
+  toast("URL deleted", "ok");
+  await loadURLs();
+}
+
+async function toggleURL(id, enabled) {
+  await authedFetch(`/api/tenant/${tenantId}/scraper/urls/${id}`, {
+    method:"PATCH", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({is_enabled: enabled})
+  });
+}
+
+async function runOne(id) {
+  allURLs = allURLs.map(u => u.id===id ? {...u, last_status:"running"} : u);
+  renderTable();
+  await authedFetch(`/api/tenant/${tenantId}/scraper/urls/${id}/run`, {method:"POST"});
+  setTimeout(loadURLs, 8000);
+}
+
+async function runAll() {
+  toast("Scraper started — check back in a minute", "ok");
+  await authedFetch(`/api/tenant/${tenantId}/scraper/run-all`, {method:"POST"});
+  setTimeout(loadURLs, 15000);
+}
+
+function toast(msg, type="ok") {
+  const el=document.getElementById("toast"); el.textContent=msg; el.className=`toast ${type} show`;
+  setTimeout(()=>{el.className="toast";}, 2500);
+}
+
+init();
+</script>
+<script src="/static/dashboard/auth.js"></script>
+</body>
+</html>

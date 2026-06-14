@@ -103,9 +103,8 @@ def scrape_brand_pages(tenant_id: str = "laman_auto") -> dict:
     from core.supabase_client import get_scraper_urls, update_scraper_status
 
     # Get tenant UUID from slug
-    from core.supabase_client import sb
-    tenant_row = sb.table("tenants").select("id")\
-        .eq("slug", tenant_id).single().execute().data
+    from core.supabase_client import sb, maybe_single
+    tenant_row = maybe_single(sb.table("tenants").select("id").eq("slug", tenant_id))
     tenant_uuid = tenant_row["id"] if tenant_row else None
 
     # Load URLs from Supabase

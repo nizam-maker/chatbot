@@ -24,14 +24,14 @@ def _get_client_and_model(tenant_cfg: dict):
     If tenant has BYOK key → use theirs.
     Otherwise → use platform key.
     """
-    from core.supabase_client import sb
+    from core.supabase_client import sb, maybe_single
     from core.crypto import decrypt
 
     try:
         slug   = tenant_cfg.get("TENANT_ID", "")
-        tenant = sb.table("tenants").select(
+        tenant = maybe_single(sb.table("tenants").select(
             "billing_mode, ai_api_key_enc, ai_model"
-        ).eq("slug", slug).single().execute().data
+        ).eq("slug", slug))
 
         if tenant and tenant.get("billing_mode") == "byok" \
                 and tenant.get("ai_api_key_enc"):
@@ -46,13 +46,20 @@ def _get_client_and_model(tenant_cfg: dict):
     return _platform_client, MODEL_DEFAULT
 
 
-def _db_context(user_msg: str) -> str:
+def _db_context(user_msg: str, tenant_id: str) -> str:
     """
     Query Supabase for cars and rebates based on message keywords.
     Returns a formatted string injected into the system prompt.
+
+    tenant_id is the tenant slug (e.g. "laman_auto") — used to scope the
+    cars query to this tenant and to look up any live external car API.
     """
     try:
-        from core.supabase_client import sb
+        from core.supabase_client import sb, get_tenant
+        from core.tenant_api import fetch_live_cars
+
+        tenant_row  = get_tenant(tenant_id)
+        tenant_uuid = tenant_row["id"] if tenant_row else None
 
         msg_lower = user_msg.lower()
 
@@ -103,6 +110,8 @@ def _db_context(user_msg: str) -> str:
 
         # ── Query Supabase ────────────────────────────────────
         q = sb.table("cars").select("*").eq("status", "available")
+        if tenant_uuid:
+            q = q.eq("tenant_id", tenant_uuid)
 
         if matched_brand:
             q = q.ilike("brand", f"%{matched_brand}%")
@@ -115,12 +124,24 @@ def _db_context(user_msg: str) -> str:
 
         # General question — return top available cars
         if not cars and not matched_brand and not matched_model:
-            cars = sb.table("cars").select("*")\
-                .eq("status", "available")\
-                .order("price_otr").limit(6).execute().data or []
+            q2 = sb.table("cars").select("*").eq("status", "available")
+            if tenant_uuid:
+                q2 = q2.eq("tenant_id", tenant_uuid)
+            cars = q2.order("price_otr").limit(6).execute().data or []
 
         if not cars:
             return ""
+
+        # If asking about a specific brand/model, prefer live price/stock
+        # from the tenant's own API (if configured) over the cached values.
+        if tenant_uuid and (matched_brand or matched_model):
+            live_cars = fetch_live_cars(tenant_uuid, brand=matched_brand, model=matched_model)
+            if live_cars:
+                live_by_id = {lc["car_id"]: lc for lc in live_cars if lc.get("car_id")}
+                for c in cars:
+                    live = live_by_id.get(c["car_id"])
+                    if live:
+                        c.update(live)
 
         lines = ["[Structured database — available cars]"]
 
@@ -197,7 +218,7 @@ def chat(
     context = "\n\n".join(chunks) if chunks else ""
 
     # 3. Query structured DB (Supabase) for prices, stock, rebates
-    db_context = _db_context(user_msg)
+    db_context = _db_context(user_msg, tenant_id)
 
     if db_context:
         for brand in ["Perodua", "Proton", "Honda", "Toyota"]:
@@ -234,6 +255,10 @@ def chat(
         system += f"\n\n{db_context}"
     if context:
         system += f"\n\n[Knowledge base — brochures & specs]\n{context}"
+    if db_context and context:
+        system += ("\n\nNote: if price or stock figures conflict between the "
+                   "structured database and the knowledge base, always use the "
+                   "structured database — it is more current.")
 
     # Inject lead capture prompt if intent detected
     if should_ask_for_contact(session):

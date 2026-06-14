@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Register — ChatPlatform</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1a6f4a;--primary-h:#145a3c;
+  --bg:#f4f3ef;--surface:#fff;--border:#e2e0d8;
+  --text:#1c1c1a;--muted:#7a7870;
+  --danger:#E24B4A;--success:#1D9E75;
+  --font:"Segoe UI",system-ui,sans-serif;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);
+     min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:var(--surface);border:1px solid var(--border);
+      border-radius:16px;padding:36px 40px;width:100%;max-width:460px;
+      box-shadow:0 4px 24px rgba(0,0,0,.06)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.logo-mark{width:36px;height:36px;border-radius:9px;background:var(--primary);
+           display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700}
+.logo-text{font-size:16px;font-weight:600}.logo-sub{font-size:12px;color:var(--muted)}
+h1{font-size:20px;font-weight:600;margin-bottom:4px}
+.subtitle{font-size:13px;color:var(--muted);margin-bottom:24px}
+.section-label{font-size:11px;font-weight:500;text-transform:uppercase;
+               letter-spacing:.06em;color:var(--muted);margin:18px 0 10px}
+.section-label:first-of-type{margin-top:0}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{margin-bottom:12px}
+.field label{font-size:12px;font-weight:500;color:var(--muted);display:block;margin-bottom:4px}
+.field input,.field select{width:100%;padding:9px 12px;border:1px solid var(--border);
+             border-radius:8px;font-size:13px;background:var(--bg);
+             color:var(--text);outline:none;transition:border-color .2s;font-family:var(--font)}
+.field input:focus,.field select:focus{border-color:var(--primary)}
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:40px}
+.pw-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);
+        background:none;border:none;cursor:pointer;color:var(--muted);
+        display:flex;align-items:center;padding:2px}
+.btn{width:100%;padding:11px;border:none;border-radius:8px;font-size:14px;
+     font-weight:500;cursor:pointer;background:var(--primary);color:#fff;
+     transition:background .15s;font-family:var(--font);margin-top:4px}
+.btn:hover{background:var(--primary-h)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.back-link{display:block;text-align:center;margin-top:14px;font-size:13px;
+           color:var(--muted);text-decoration:none}
+.back-link:hover{color:var(--text)}
+.alert{font-size:13px;padding:9px 12px;border-radius:8px;margin-bottom:14px;display:none;line-height:1.5}
+.alert.err{background:#fce8e8;color:var(--danger);border:1px solid #f09595;display:block}
+.alert.ok{background:#e8f4ee;color:#085041;border:1px solid #5dcaa5;display:block}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);
+         border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;
+         vertical-align:middle;margin-right:6px;display:none}
+.spinner.show{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pending-card{text-align:center;padding:32px 20px;display:none}
+.pending-icon{width:56px;height:56px;border-radius:50%;background:#e8f4ee;
+              display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.pending-title{font-size:18px;font-weight:600;margin-bottom:8px}
+.pending-sub{font-size:13px;color:var(--muted);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- Registration form -->
+  <div id="form-view">
+    <div class="logo">
+      <div class="logo-mark">CP</div>
+      <div><div class="logo-text">ChatPlatform</div><div class="logo-sub">Create your account</div></div>
+    </div>
+
+    <h1>Get started</h1>
+    <p class="subtitle">Create your tenant account to get started</p>
+
+    <div class="alert" id="alert"></div>
+
+    <div class="section-label">Your details</div>
+    <div class="form-row">
+      <div class="field">
+        <label>Full name *</label>
+        <input type="text" id="full-name" placeholder="Ahmad Faiz"/>
+      </div>
+      <div class="field">
+        <label>Email *</label>
+        <input type="email" id="email" placeholder="you@company.com"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Password *</label>
+        <div class="pw-wrap">
+          <input type="password" id="password" placeholder="Min 8 characters"/>
+          <button type="button" class="pw-eye" onclick="togglePw('password',this)" tabindex="-1" aria-label="Show password">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Confirm password *</label>
+        <div class="pw-wrap">
+          <input type="password" id="password2" placeholder="Repeat password"/>
+          <button type="button" class="pw-eye" onclick="togglePw('password2',this)" tabindex="-1" aria-label="Show password">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Business details</div>
+    <div class="form-row">
+      <div class="field">
+        <label>Business name *</label>
+        <input type="text" id="biz-name" placeholder="Laman Auto Sdn Bhd"/>
+      </div>
+      <div class="field">
+        <label>Industry</label>
+        <select id="industry">
+          <option value="Automotive">Automotive</option>
+          <option value="Healthcare">Healthcare</option>
+          <option value="Legal">Legal</option>
+          <option value="Education">Education</option>
+          <option value="Finance">Finance</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Website URL (optional)</label>
+      <input type="text" id="website" placeholder="https://yoursite.com"/>
+    </div>
+
+    <button class="btn" id="reg-btn" onclick="register()">
+      <span class="spinner" id="spinner"></span>
+      Create account
+    </button>
+    <a href="/dashboard/login" class="back-link">Already have an account? Sign in</a>
+  </div>
+
+  <!-- Pending approval screen -->
+  <div class="pending-card" id="pending-view">
+    <div class="pending-icon">
+      <svg width="24" height="24" fill="none" stroke="#1a6f4a" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+    </div>
+    <div class="pending-title">Account created!</div>
+    <div class="pending-sub">
+      Your account is pending approval by our admin team.<br>
+      You'll receive an email once your account is activated.<br><br>
+      <strong>Usually approved within 24 hours.</strong>
+    </div>
+    <a href="/dashboard/login" style="display:inline-block;margin-top:20px;
+       padding:9px 20px;background:var(--primary);color:#fff;border-radius:8px;
+       font-size:13px;font-weight:500;text-decoration:none">Back to login</a>
+  </div>
+
+</div>
+
+<script>
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.innerHTML = show
+    ? '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+    : '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+}
+
+let _sb = null;
+async function getSb() {
+  if (_sb) return _sb;
+  const cfg = await fetch("/api/public-config").then(r => r.json());
+  _sb = supabase.createClient(cfg.supabase_url, cfg.supabase_anon_key);
+  return _sb;
+}
+
+async function register() {
+  const fullName = document.getElementById("full-name").value.trim();
+  const email    = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const password2= document.getElementById("password2").value;
+  const bizName  = document.getElementById("biz-name").value.trim();
+  const industry = document.getElementById("industry").value;
+  const website  = document.getElementById("website").value.trim();
+
+  // Validate
+  if (!fullName || !email || !password || !bizName) {
+    showAlert("Please fill in all required fields.", "err"); return;
+  }
+  if (password.length < 8) {
+    showAlert("Password must be at least 8 characters.", "err"); return;
+  }
+  if (password !== password2) {
+    showAlert("Passwords do not match.", "err"); return;
+  }
+
+  const btn     = document.getElementById("reg-btn");
+  const spinner = document.getElementById("spinner");
+  btn.disabled  = true;
+  spinner.classList.add("show");
+  clearAlert();
+
+  try {
+    const sb = await getSb();
+
+    // 1. Create Supabase auth user
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+          role:      "tenant",
+          biz_name:  bizName,
+          industry,
+          website,
+        }
+      }
+    });
+
+    if (error) { showAlert(error.message, "err"); return; }
+
+    // 2. Update profile with full name (trigger creates the base profile)
+    if (data.user) {
+      await sb.from("profiles").update({
+        full_name: fullName,
+      }).eq("id", data.user.id);
+    }
+
+    // 3. Show pending approval screen
+    document.getElementById("form-view").style.display    = "none";
+    document.getElementById("pending-view").style.display = "block";
+
+  } catch(e) {
+    showAlert("Registration failed. Please try again.", "err");
+  } finally {
+    btn.disabled = false;
+    spinner.classList.remove("show");
+  }
+}
+
+function showAlert(msg, type) {
+  const el = document.getElementById("alert");
+  el.textContent = msg;
+  el.className   = "alert " + type;
+}
+function clearAlert() {
+  document.getElementById("alert").className = "alert";
+}
+</script>
+</body>
+</html>
