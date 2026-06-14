@@ -69,6 +69,11 @@ nav{padding:10px 8px;flex:1}
 .field input,.field select,.field textarea{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);outline:none;font-family:var(--font)}
 .field textarea{resize:vertical;height:80px}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary)}
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:40px}
+.pw-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);
+        background:none;border:none;cursor:pointer;color:var(--muted);
+        display:flex;align-items:center;padding:2px}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .color-row{display:flex;gap:6px;align-items:center}
 .color-row input[type=color]{width:36px;height:34px;padding:2px;border-radius:8px;border:1px solid var(--border);cursor:pointer;flex-shrink:0}
@@ -110,6 +115,64 @@ nav{padding:10px 8px;flex:1}
 .alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;display:none}
 .alert.ok{background:#e8f4ee;color:#085041;border:1px solid #5dcaa5;display:block}
 .alert.err{background:#fce8e8;color:#a32d2d;border:1px solid #f09595;display:block}
+
+/* Files / Scraper tabs */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.stat-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.stat-label{font-size:12px;color:var(--muted);margin-bottom:4px}
+.stat-val{font-size:22px;font-weight:600}
+.stat-val.green{color:var(--success)}.stat-val.red{color:var(--danger)}.stat-val.amber{color:var(--warning)}
+
+.upload-zone{background:var(--bg);border:2px dashed var(--border);border-radius:var(--radius);padding:24px;text-align:center;margin-bottom:14px;cursor:pointer;transition:all .2s;position:relative}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--primary);background:#f0faf5}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{width:36px;height:36px;border-radius:10px;background:#e8f4ee;display:flex;align-items:center;justify-content:center;margin:0 auto 8px}
+.upload-title{font-size:13px;font-weight:500;margin-bottom:4px}
+.upload-sub{font-size:12px;color:var(--muted)}
+
+.upload-config{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.upload-config .field,.add-form-grid .field{margin-bottom:0}
+.upload-config .field input,.upload-config .field select{padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--surface);color:var(--text);outline:none;width:auto}
+.upload-config .field input:focus,.upload-config .field select:focus{border-color:var(--primary)}
+
+.upload-progress{display:none;margin-bottom:14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px}
+.progress-bar{height:6px;background:var(--surface);border-radius:3px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;background:var(--primary);border-radius:3px;transition:width .3s;width:0%}
+
+.table-wrap{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px}
+.table-toolbar{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.table-toolbar input{flex:1;min-width:140px;padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--surface);color:var(--text);outline:none}
+.table-toolbar input:focus{border-color:var(--primary)}
+.table-toolbar select{padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--surface);color:var(--text);outline:none}
+.detail table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+.detail th{text-align:left;padding:8px 12px;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface)}
+.detail td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.detail tr:last-child td{border-bottom:none}
+.detail tr:hover td{background:var(--surface)}
+
+.d-badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px}
+.d-car{background:#e8f4ee;color:#085041}
+.d-rebate{background:#faeeda;color:#633806}
+.d-faq{background:#eeedfe;color:#3C3489}
+.d-news{background:#fce8e8;color:#712B13}
+
+.badge-fail{background:#fce8e8;color:var(--danger);border-color:#f08080}
+.badge-warn{background:#faeeda;color:var(--warning);border-color:#efb347}
+.badge-off{background:#f5f4f0;color:var(--muted);border-color:var(--border)}
+.phone-link{color:var(--primary);text-decoration:none;font-family:var(--mono);font-size:12px}
+.phone-link:hover{text-decoration:underline}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;display:inline-block}
+.dot-ok{background:var(--success)}.dot-fail{background:var(--danger)}.dot-warn{background:var(--warning)}
+
+.add-form{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+.add-form-title{font-size:13px;font-weight:500;margin-bottom:10px}
+.add-form-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:8px;align-items:end}
+.add-form-grid .field input,.add-form-grid .field select{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--surface);color:var(--text);outline:none}
+.add-form-grid .field input:focus,.add-form-grid .field select:focus{border-color:var(--primary)}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:10px 16px;border-radius:9px;font-size:13px;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;z-index:999}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok{background:var(--success)}.toast.err{background:var(--danger)}
 </style>
 </head>
 <body>
@@ -129,15 +192,6 @@ nav{padding:10px 8px;flex:1}
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
       Analytics
     </a>
-    <div class="nav-section">Knowledge</div>
-    <a href="/dashboard/files" class="nav-item">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      File manager
-    </a>
-    <a href="/dashboard/scraper" class="nav-item">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
-      Scraper manager
-    </a>
     <div class="nav-section">Chat</div>
     <a href="/dashboard/tester" class="nav-item">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
@@ -151,11 +205,6 @@ nav{padding:10px 8px;flex:1}
     <a href="/dashboard/tenants" class="nav-item active">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
       Tenants
-    </a>
-    <div class="nav-section">Leads</div>
-    <a href="/dashboard/leads" class="nav-item">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-      Sales contacts
     </a>
   </nav>
   <div class="sidebar-footer">
@@ -206,6 +255,9 @@ nav{padding:10px 8px;flex:1}
             <div class="tab" onclick="switchTab('billing',this)">AI &amp; billing</div>
             <div class="tab" onclick="switchTab('keys',this)">API keys</div>
             <div class="tab" onclick="switchTab('embed',this)">Embed</div>
+            <div class="tab" onclick="switchTab('files',this)">Files</div>
+            <div class="tab" onclick="switchTab('scraper',this)">Scraper</div>
+            <div class="tab" onclick="switchTab('leads',this)">Leads</div>
           </div>
 
           <!-- Branding tab -->
@@ -301,7 +353,12 @@ nav{padding:10px 8px;flex:1}
               <div id="byok-form">
                 <div class="field">
                   <label>Anthropic API key</label>
-                  <input type="password" id="byok-input" placeholder="sk-ant-api03-..."/>
+                  <div class="pw-wrap">
+                    <input type="password" id="byok-input" placeholder="sk-ant-api03-..."/>
+                    <button type="button" class="pw-eye" onclick="togglePw('byok-input',this)" tabindex="-1" aria-label="Show key">
+                      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                  </div>
                 </div>
                 <div style="display:flex;gap:8px;margin-top:8px">
                   <button class="btn btn-primary btn-sm" onclick="saveBYOK()">Save &amp; enable BYOK</button>
@@ -340,6 +397,169 @@ nav{padding:10px 8px;flex:1}
             </div>
           </div>
 
+          <!-- Files tab -->
+          <div class="tab-panel" id="tab-files">
+            <div class="stats">
+              <div class="stat-card"><div class="stat-label">Total files</div><div class="stat-val" id="tf-total">—</div></div>
+              <div class="stat-card"><div class="stat-label">Active</div><div class="stat-val green" id="tf-active">—</div></div>
+              <div class="stat-card"><div class="stat-label">Active chunks</div><div class="stat-val" id="tf-chunks">—</div></div>
+              <div class="stat-card"><div class="stat-label">Total size</div><div class="stat-val" id="tf-size">—</div></div>
+            </div>
+
+            <div class="upload-zone" id="tf-drop-zone"
+                 ondragover="event.preventDefault();this.classList.add('drag')"
+                 ondragleave="this.classList.remove('drag')"
+                 ondrop="handleFileDrop(event)">
+              <input type="file" id="tf-file-input" accept=".pdf,.txt,.csv"
+                     onchange="handleFileSelect(this.files)" multiple/>
+              <div class="upload-icon">
+                <svg width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+              </div>
+              <div class="upload-title">Drop files here or click to browse</div>
+              <div class="upload-sub">Supports PDF, TXT, CSV &mdash; max 50MB per file</div>
+            </div>
+
+            <div class="upload-config" id="tf-upload-config" style="display:none">
+              <div class="field">
+                <label>Selected file</label>
+                <input type="text" id="tf-filename" readonly style="width:200px;color:var(--muted)"/>
+              </div>
+              <div class="field">
+                <label>Knowledge domain</label>
+                <select id="tf-domain">
+                  <option value="car_specs">car_specs</option>
+                  <option value="rebates_promos">rebates_promos</option>
+                  <option value="faq_support">faq_support</option>
+                  <option value="surat_khabar">surat_khabar</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Brand (optional)</label>
+                <input type="text" id="tf-brand" placeholder="e.g. Proton" style="width:110px"/>
+              </div>
+              <div class="field">
+                <label>Model (optional)</label>
+                <input type="text" id="tf-model" placeholder="e.g. Saga" style="width:110px"/>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="uploadTenantFile()">Upload &amp; ingest</button>
+              <button class="btn btn-sm" onclick="cancelTenantUpload()">Cancel</button>
+            </div>
+
+            <div class="upload-progress" id="tf-upload-progress">
+              <div style="font-size:13px;font-weight:500" id="tf-progress-label">Uploading...</div>
+              <div class="progress-bar"><div class="progress-fill" id="tf-progress-fill"></div></div>
+            </div>
+
+            <div class="table-wrap">
+              <div class="table-toolbar">
+                <input type="text" id="tf-search" placeholder="Search by filename..." oninput="renderFilesTable()"/>
+                <select id="tf-filter-domain" onchange="renderFilesTable()">
+                  <option value="">All domains</option>
+                  <option value="car_specs">car_specs</option>
+                  <option value="rebates_promos">rebates_promos</option>
+                  <option value="faq_support">faq_support</option>
+                  <option value="surat_khabar">surat_khabar</option>
+                </select>
+                <select id="tf-filter-status" onchange="renderFilesTable()">
+                  <option value="">All status</option>
+                  <option value="1">Active</option>
+                  <option value="0">Disabled</option>
+                </select>
+                <span style="font-size:12px;color:var(--muted)" id="tf-row-count"></span>
+              </div>
+              <table>
+                <colgroup>
+                  <col style="width:30%"><col style="width:16%"><col style="width:8%">
+                  <col style="width:8%"><col style="width:10%"><col style="width:13%">
+                  <col style="width:8%"><col style="width:7%">
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>File name</th><th>Domain</th><th>Type</th>
+                    <th>Chunks</th><th>Size</th><th>Uploaded</th>
+                    <th>Active</th><th></th>
+                  </tr>
+                </thead>
+                <tbody id="tf-tbody">
+                  <tr><td colspan="8" class="empty-state"><span class="spinner"></span> Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Scraper tab -->
+          <div class="tab-panel" id="tab-scraper">
+            <div class="stats">
+              <div class="stat-card"><div class="stat-label">Total URLs</div><div class="stat-val" id="ts-total">—</div></div>
+              <div class="stat-card"><div class="stat-label">Success</div><div class="stat-val green" id="ts-ok">—</div></div>
+              <div class="stat-card"><div class="stat-label">Failed</div><div class="stat-val red" id="ts-fail">—</div></div>
+              <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-val amber" id="ts-pending">—</div></div>
+            </div>
+
+            <div class="add-form">
+              <div class="add-form-title">Add new URL</div>
+              <div class="add-form-grid">
+                <div class="field"><label>URL</label><input type="text" id="ts-url" placeholder="https://..."/></div>
+                <div class="field"><label>Brand</label><input type="text" id="ts-brand" placeholder="Perodua"/></div>
+                <div class="field"><label>Model</label><input type="text" id="ts-model" placeholder="Myvi"/></div>
+                <div class="field"><label>Domain</label>
+                  <select id="ts-domain">
+                    <option value="car_specs">car_specs</option>
+                    <option value="rebates_promos">rebates_promos</option>
+                    <option value="faq_support">faq_support</option>
+                    <option value="surat_khabar">surat_khabar</option>
+                  </select>
+                </div>
+                <div class="field"><label>&nbsp;</label><button class="btn btn-primary" onclick="addTenantURL()">Add URL</button></div>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <div class="table-toolbar">
+                <input type="text" id="ts-search" placeholder="Search URLs..." oninput="renderScraperTable()"/>
+                <span style="font-size:12px;color:var(--muted)" id="ts-row-count"></span>
+                <button class="btn btn-sm" onclick="runAllTenant()">Run all now</button>
+              </div>
+              <table>
+                <colgroup><col style="width:5%"><col style="width:30%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:12%"><col style="width:8%"></colgroup>
+                <thead><tr><th>On</th><th>URL</th><th>Brand / Model</th><th>Domain</th><th>Status</th><th>Last scraped</th><th></th></tr></thead>
+                <tbody id="ts-tbody"><tr><td colspan="7" class="empty-state"><span class="spinner"></span> Loading...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Leads tab -->
+          <div class="tab-panel" id="tab-leads">
+            <div class="stats">
+              <div class="stat-card"><div class="stat-label">Total leads</div><div class="stat-val" id="tl-total">—</div></div>
+              <div class="stat-card"><div class="stat-label">Notified</div><div class="stat-val green" id="tl-notified">—</div></div>
+              <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-val amber" id="tl-pending">—</div></div>
+              <div class="stat-card"><div class="stat-label">Last captured</div><div class="stat-val" id="tl-last" style="font-size:14px">—</div></div>
+            </div>
+
+            <div class="table-wrap">
+              <div class="table-toolbar">
+                <input type="text" id="tl-search" placeholder="Search by name, phone or interest..." oninput="renderLeadsTable()"/>
+                <span style="font-size:12px;color:var(--muted)" id="tl-row-count"></span>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th><th>Phone</th><th>Interest</th>
+                    <th>Source</th><th>Captured</th><th>Notified</th>
+                  </tr>
+                </thead>
+                <tbody id="tl-tbody">
+                  <tr><td colspan="6" class="empty-state"><span class="spinner"></span> Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -347,9 +567,47 @@ nav{padding:10px 8px;flex:1}
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.innerHTML = show
+    ? '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+    : '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+}
+
 let tenants     = [];
 let activeTenant = null;
+let allFiles    = [];
+let pendingFile = null;
+let allURLs     = [];
+
+const domainClass = {
+  car_specs:      "d-car",
+  rebates_promos: "d-rebate",
+  faq_support:    "d-faq",
+  surat_khabar:   "d-news",
+};
+
+function fmtSize(bytes) {
+  if (!bytes) return "—";
+  if (bytes < 1024)       return bytes + " B";
+  if (bytes < 1024*1024)  return (bytes/1024).toFixed(1) + " KB";
+  return (bytes/1024/1024).toFixed(1) + " MB";
+}
+
+function fmtDate(ts) {
+  if (!ts) return "—";
+  return new Date(ts).toLocaleDateString("en-MY");
+}
+
+function toast(msg, type="ok") {
+  const el=document.getElementById("toast"); el.textContent=msg; el.className=`toast ${type} show`;
+  setTimeout(()=>{el.className="toast";}, 2500);
+}
 
 async function loadTenants() {
   const res = await fetch("/api/tenants");
@@ -515,8 +773,327 @@ function switchTab(name, el) {
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
   el.classList.add("active");
   document.getElementById("tab-" + name).classList.add("active");
-  if (name === "keys")  loadKeys();
-  if (name === "embed") loadEmbed();
+  if (name === "keys")    loadKeys();
+  if (name === "embed")   loadEmbed();
+  if (name === "files")   loadTenantFiles();
+  if (name === "scraper") loadScraperURLs();
+  if (name === "leads")   loadTenantLeads();
+}
+
+/* ---------------- Leads tab ---------------- */
+
+let allLeads = [];
+
+async function loadTenantLeads() {
+  if (!activeTenant) return;
+  const res = await authedFetch(`/api/tenant/${activeTenant.id}/leads`);
+  allLeads  = await res.json();
+  renderLeadsTable();
+}
+
+function renderLeadsTable() {
+  const q = document.getElementById("tl-search").value.toLowerCase();
+
+  const rows = allLeads.filter(l => {
+    if (!q) return true;
+    return (l.name || "").toLowerCase().includes(q)
+        || (l.phone || "").toLowerCase().includes(q)
+        || (l.interest || "").toLowerCase().includes(q);
+  });
+
+  document.getElementById("tl-row-count").textContent = `${rows.length} of ${allLeads.length} leads`;
+
+  const notified = allLeads.filter(l => l.notified);
+  document.getElementById("tl-total").textContent    = allLeads.length;
+  document.getElementById("tl-notified").textContent = notified.length;
+  document.getElementById("tl-pending").textContent  = allLeads.length - notified.length;
+  document.getElementById("tl-last").textContent     = allLeads.length ? fmtDate(allLeads[0].created_at) : "—";
+
+  const tbody = document.getElementById("tl-tbody");
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No leads captured yet</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(l => `
+    <tr>
+      <td style="font-weight:500">${l.name || "—"}</td>
+      <td><a class="phone-link" href="tel:${l.phone}">${l.phone || "—"}</a></td>
+      <td>${l.interest || "—"}</td>
+      <td style="color:var(--muted);font-size:12px">${l.source || "chatbot"}</td>
+      <td style="font-size:12px;color:var(--muted)">${fmtDate(l.created_at)}</td>
+      <td><span class="badge ${l.notified ? "badge-ok" : "badge-off"}">${l.notified ? "Notified" : "Pending"}</span></td>
+    </tr>`).join("");
+}
+
+/* ---------------- Files tab ---------------- */
+
+async function loadTenantFiles() {
+  if (!activeTenant) return;
+  const res = await authedFetch(`/api/tenant/${activeTenant.id}/files`);
+  allFiles  = await res.json();
+  renderFilesTable();
+}
+
+function renderFilesTable() {
+  const q  = document.getElementById("tf-search").value.toLowerCase();
+  const fd = document.getElementById("tf-filter-domain").value;
+  const fs = document.getElementById("tf-filter-status").value;
+
+  let rows = allFiles.filter(f => {
+    if (q  && !f.file_name.toLowerCase().includes(q)) return false;
+    if (fd && f.domain !== fd)       return false;
+    if (fs === "1" && !f.is_enabled) return false;
+    if (fs === "0" &&  f.is_enabled) return false;
+    return true;
+  });
+
+  document.getElementById("tf-row-count").textContent =
+    `${rows.length} of ${allFiles.length} files`;
+
+  const active    = allFiles.filter(f => f.is_enabled);
+  const chunks    = active.reduce((a, f) => a + (f.chunk_count || 0), 0);
+  const totalSize = allFiles.reduce((a, f) => a + (f.file_size  || 0), 0);
+  document.getElementById("tf-total").textContent  = allFiles.length;
+  document.getElementById("tf-active").textContent = active.length;
+  document.getElementById("tf-chunks").textContent = chunks;
+  document.getElementById("tf-size").textContent   = fmtSize(totalSize);
+
+  const tbody = document.getElementById("tf-tbody");
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-state">
+      No files yet — upload a PDF to get started</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(f => `
+    <tr>
+      <td style="font-weight:500" title="${f.file_name}">
+        <svg width="13" height="13" fill="none" stroke="var(--muted)"
+             stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px;margin-right:5px">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>${f.file_name}
+      </td>
+      <td><span class="d-badge ${domainClass[f.domain]||"d-car"}">${f.domain}</span></td>
+      <td style="text-transform:uppercase;font-size:12px;color:var(--muted)">${f.file_type||"pdf"}</td>
+      <td style="font-size:13px">${f.chunk_count || "—"}</td>
+      <td style="font-size:12px;color:var(--muted)">${fmtSize(f.file_size)}</td>
+      <td style="font-size:12px;color:var(--muted)">${fmtDate(f.created_at)}</td>
+      <td>
+        <label class="toggle" aria-label="Enable ${f.file_name}">
+          <input type="checkbox" ${f.is_enabled ? "checked" : ""}
+            onchange="toggleTenantFile('${f.id}', this.checked)">
+          <span class="slider"></span>
+        </label>
+      </td>
+      <td>
+        <button class="btn btn-sm btn-danger" title="Delete file"
+          onclick="deleteTenantFile('${f.id}', '${f.file_name}')">
+          <svg width="12" height="12" fill="none" stroke="currentColor"
+               stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+          </svg>
+        </button>
+      </td>
+    </tr>`).join("");
+}
+
+function handleFileDrop(e) {
+  e.preventDefault();
+  document.getElementById("tf-drop-zone").classList.remove("drag");
+  const files = e.dataTransfer.files;
+  if (files.length) showUploadConfig(files[0]);
+}
+
+function handleFileSelect(files) {
+  if (files.length) showUploadConfig(files[0]);
+}
+
+function showUploadConfig(file) {
+  pendingFile = file;
+  document.getElementById("tf-filename").value = file.name;
+  document.getElementById("tf-upload-config").style.display = "flex";
+  document.getElementById("tf-upload-progress").style.display = "none";
+}
+
+function cancelTenantUpload() {
+  pendingFile = null;
+  document.getElementById("tf-upload-config").style.display = "none";
+  document.getElementById("tf-file-input").value = "";
+}
+
+async function uploadTenantFile() {
+  if (!pendingFile || !activeTenant) return;
+
+  const domain = document.getElementById("tf-domain").value;
+  const brand  = document.getElementById("tf-brand").value;
+  const model  = document.getElementById("tf-model").value;
+
+  document.getElementById("tf-upload-config").style.display = "none";
+  const prog = document.getElementById("tf-upload-progress");
+  const fill = document.getElementById("tf-progress-fill");
+  const lbl  = document.getElementById("tf-progress-label");
+  prog.style.display = "block";
+
+  lbl.textContent = `Uploading ${pendingFile.name}...`;
+  fill.style.width = "30%";
+  setTimeout(() => { fill.style.width = "60%"; lbl.textContent = "Ingesting into knowledge base..."; }, 800);
+  setTimeout(() => { fill.style.width = "85%"; lbl.textContent = "Creating embeddings..."; }, 2000);
+
+  const fd = new FormData();
+  fd.append("file",   pendingFile);
+  fd.append("domain", domain);
+  fd.append("brand",  brand);
+  fd.append("model",  model);
+
+  try {
+    const res  = await authedFetch(`/api/tenant/${activeTenant.id}/files/upload`, {method:"POST", body:fd});
+    const data = await res.json();
+
+    fill.style.width = "100%";
+    if (data.status === "ok") {
+      lbl.textContent = `✓ ${data.file} ingested — ${data.chunks} chunks created`;
+      setTimeout(() => {
+        prog.style.display = "none";
+        fill.style.width   = "0%";
+        document.getElementById("tf-file-input").value = "";
+        pendingFile = null;
+        loadTenantFiles();
+      }, 1500);
+    } else {
+      lbl.textContent = "Error: " + JSON.stringify(data);
+    }
+  } catch(e) {
+    lbl.textContent = "Upload failed: " + e.message;
+  }
+}
+
+async function toggleTenantFile(id, enabled) {
+  await authedFetch(`/api/tenant/${activeTenant.id}/files/${id}`, {
+    method:  "PATCH",
+    headers: {"Content-Type": "application/json"},
+    body:    JSON.stringify({is_enabled: enabled})
+  });
+  allFiles = allFiles.map(f => f.id === id ? {...f, is_enabled: enabled} : f);
+  renderFilesTable();
+}
+
+async function deleteTenantFile(id, name) {
+  if (!confirm(`Delete "${name}"?\n\nThis removes it from the knowledge base permanently.`))
+    return;
+  await authedFetch(`/api/tenant/${activeTenant.id}/files/${id}`, {method: "DELETE"});
+  await loadTenantFiles();
+  toast("File deleted", "ok");
+}
+
+/* ---------------- Scraper tab ---------------- */
+
+function statusBadge(s) {
+  if (s==="ok")   return `<span class="badge badge-ok"><span class="dot dot-ok"></span>ok</span>`;
+  if (s==="fail") return `<span class="badge badge-fail"><span class="dot dot-fail"></span>fail</span>`;
+  return `<span class="badge badge-warn"><span class="dot dot-warn"></span>pending</span>`;
+}
+
+async function loadScraperURLs() {
+  if (!activeTenant) return;
+  const res = await authedFetch(`/api/tenant/${activeTenant.id}/scraper/urls`);
+  allURLs   = await res.json();
+  renderScraperTable();
+}
+
+function renderScraperTable() {
+  const q = document.getElementById("ts-search").value.toLowerCase();
+  const rows = allURLs.filter(u =>
+    !q || `${u.url} ${u.brand} ${u.model}`.toLowerCase().includes(q)
+  );
+
+  document.getElementById("ts-row-count").textContent = `${rows.length} of ${allURLs.length} URLs`;
+  document.getElementById("ts-total").textContent   = allURLs.length;
+  document.getElementById("ts-ok").textContent      = allURLs.filter(u=>u.last_status==="ok").length;
+  document.getElementById("ts-fail").textContent    = allURLs.filter(u=>u.last_status==="fail").length;
+  document.getElementById("ts-pending").textContent = allURLs.filter(u=>!u.last_status||u.last_status==="pending").length;
+
+  const tbody = document.getElementById("ts-tbody");
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-state">No URLs yet — add your first scraper URL above</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(u => `
+    <tr>
+      <td>
+        <label class="toggle">
+          <input type="checkbox" ${u.is_enabled?"checked":""}
+            onchange="toggleTenantURL('${u.id}', this.checked)">
+          <span class="slider"></span>
+        </label>
+      </td>
+      <td style="font-size:12px;color:var(--muted)" title="${u.url}">${u.url}</td>
+      <td style="font-weight:500">${u.brand||""} ${u.model||""}</td>
+      <td><span class="d-badge d-car">${u.domain}</span></td>
+      <td>${statusBadge(u.last_status||"pending")}</td>
+      <td style="font-size:12px;color:var(--muted)">${u.last_scraped ? new Date(u.last_scraped).toLocaleDateString("en-MY") : "never"}</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-sm" onclick="runOneTenant('${u.id}')" title="Run">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="deleteTenantURL('${u.id}')" title="Delete">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`).join("");
+}
+
+async function addTenantURL() {
+  const url    = document.getElementById("ts-url").value.trim();
+  const brand  = document.getElementById("ts-brand").value.trim();
+  const model  = document.getElementById("ts-model").value.trim();
+  const domain = document.getElementById("ts-domain").value;
+  if (!url) { document.getElementById("ts-url").focus(); return; }
+
+  const res  = await authedFetch(`/api/tenant/${activeTenant.id}/scraper/urls`, {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({url, brand, model, domain})
+  });
+  const data = await res.json();
+  if (data.id) {
+    document.getElementById("ts-url").value   = "";
+    document.getElementById("ts-brand").value = "";
+    document.getElementById("ts-model").value = "";
+    toast("URL added ✓", "ok");
+    await loadScraperURLs();
+  } else { toast("Failed to add URL", "err"); }
+}
+
+async function deleteTenantURL(id) {
+  if (!confirm("Delete this URL?")) return;
+  await authedFetch(`/api/tenant/${activeTenant.id}/scraper/urls/${id}`, {method:"DELETE"});
+  toast("URL deleted", "ok");
+  await loadScraperURLs();
+}
+
+async function toggleTenantURL(id, enabled) {
+  await authedFetch(`/api/tenant/${activeTenant.id}/scraper/urls/${id}`, {
+    method:"PATCH", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({is_enabled: enabled})
+  });
+}
+
+async function runOneTenant(id) {
+  allURLs = allURLs.map(u => u.id===id ? {...u, last_status:"running"} : u);
+  renderScraperTable();
+  await authedFetch(`/api/tenant/${activeTenant.id}/scraper/urls/${id}/run`, {method:"POST"});
+  setTimeout(loadScraperURLs, 8000);
+}
+
+async function runAllTenant() {
+  toast("Scraper started — check back in a minute", "ok");
+  await authedFetch(`/api/tenant/${activeTenant.id}/scraper/run-all`, {method:"POST"});
+  setTimeout(loadScraperURLs, 15000);
 }
 
 function showNewTenantModal() {

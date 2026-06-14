@@ -11,7 +11,7 @@
   --primary:#1a6f4a;--primary-h:#145a3c;
   --bg:#f4f3ef;--surface:#fff;--border:#e2e0d8;
   --text:#1c1c1a;--muted:#7a7870;
-  --danger:#E24B4A;
+  --danger:#E24B4A;--warning:#EF9F27;
   --font:"Segoe UI",system-ui,sans-serif;--radius:10px;
 }
 body{font-family:var(--font);background:var(--bg);color:var(--text);
@@ -28,28 +28,34 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);
 h1{font-size:20px;font-weight:600;margin-bottom:4px}
 .subtitle{font-size:13px;color:var(--muted);margin-bottom:24px}
 .field{margin-bottom:14px}
-.field label{font-size:12px;font-weight:500;color:var(--muted);
-             display:block;margin-bottom:4px}
+.field label{font-size:12px;font-weight:500;color:var(--muted);display:block;margin-bottom:4px}
 .field input{width:100%;padding:10px 13px;border:1px solid var(--border);
              border-radius:8px;font-size:14px;background:var(--bg);
-             color:var(--text);outline:none;transition:border-color .2s;
-             font-family:var(--font)}
+             color:var(--text);outline:none;transition:border-color .2s;font-family:var(--font)}
 .field input:focus{border-color:var(--primary)}
-.btn{width:100%;padding:11px;border:none;border-radius:8px;
-     font-size:14px;font-weight:500;cursor:pointer;
-     background:var(--primary);color:#fff;transition:background .15s;
-     font-family:var(--font)}
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:40px}
+.pw-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);
+        background:none;border:none;cursor:pointer;color:var(--muted);
+        display:flex;align-items:center;padding:2px}
+.btn{width:100%;padding:11px;border:none;border-radius:8px;font-size:14px;
+     font-weight:500;cursor:pointer;background:var(--primary);color:#fff;
+     transition:background .15s;font-family:var(--font)}
 .btn:hover{background:var(--primary-h)}
 .btn:disabled{opacity:.6;cursor:not-allowed}
-.error{font-size:13px;color:var(--danger);background:#fce8e8;
-       border:1px solid #f09595;border-radius:8px;
-       padding:9px 12px;margin-bottom:14px;display:none}
-.error.show{display:block}
-.spinner{display:inline-block;width:14px;height:14px;
-         border:2px solid rgba(255,255,255,.4);
-         border-top-color:#fff;border-radius:50%;
-         animation:spin .6s linear infinite;vertical-align:middle;
-         margin-right:6px;display:none}
+.divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--muted);font-size:12px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.link-btn{width:100%;padding:11px;border:1px solid var(--border);border-radius:8px;
+          font-size:14px;font-weight:500;cursor:pointer;background:transparent;
+          color:var(--text);transition:all .15s;font-family:var(--font);text-align:center;
+          display:block;text-decoration:none}
+.link-btn:hover{background:var(--bg)}
+.alert{font-size:13px;padding:9px 12px;border-radius:8px;margin-bottom:14px;display:none}
+.alert.err{background:#fce8e8;color:var(--danger);border:1px solid #f09595;display:block}
+.alert.warn{background:#faeeda;color:#633806;border:1px solid #efb347;display:block}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);
+         border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;
+         vertical-align:middle;margin-right:6px;display:none}
 .spinner.show{display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
@@ -58,97 +64,118 @@ h1{font-size:20px;font-weight:600;margin-bottom:4px}
 <div class="card">
   <div class="logo">
     <div class="logo-mark">CP</div>
-    <div>
-      <div class="logo-text">ChatPlatform</div>
-      <div class="logo-sub">Management dashboard</div>
-    </div>
+    <div><div class="logo-text">ChatPlatform</div><div class="logo-sub">Management dashboard</div></div>
   </div>
 
   <h1>Sign in</h1>
-  <p class="subtitle">Enter your admin credentials to continue</p>
+  <p class="subtitle">Enter your credentials to continue</p>
 
-  <div class="error" id="error-msg"></div>
+  <div class="alert" id="alert"></div>
 
   <div class="field">
     <label>Email</label>
-    <input type="email" id="email" placeholder="admin@example.com"
+    <input type="email" id="email" placeholder="you@example.com"
            onkeydown="if(event.key==='Enter')login()"/>
   </div>
   <div class="field">
     <label>Password</label>
-    <input type="password" id="password" placeholder="••••••••"
-           onkeydown="if(event.key==='Enter')login()"/>
+    <div class="pw-wrap">
+      <input type="password" id="password" placeholder="••••••••"
+             onkeydown="if(event.key==='Enter')login()"/>
+      <button type="button" class="pw-eye" onclick="togglePw('password',this)" tabindex="-1" aria-label="Show password">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
   </div>
 
   <button class="btn" id="login-btn" onclick="login()">
     <span class="spinner" id="spinner"></span>
     Sign in
   </button>
+
+  <div class="divider">or</div>
+  <a href="/dashboard/register" class="link-btn">Create new account</a>
 </div>
 
 <script>
-// ── Init Supabase client ──────────────────────────────────────
-let _cfg = null;
-async function getConfig() {
-  if (_cfg) return _cfg;
-  const res = await fetch("/api/public-config");
-  _cfg = await res.json();
-  return _cfg;
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.innerHTML = show
+    ? '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+    : '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
 }
 
-async function getSupabase() {
-  const cfg = await getConfig();
-  return supabase.createClient(cfg.supabase_url, cfg.supabase_anon_key);
+let _sb = null;
+
+async function getSb() {
+  if (_sb) return _sb;
+  const cfg = await fetch("/api/public-config").then(r => r.json());
+  _sb = supabase.createClient(cfg.supabase_url, cfg.supabase_anon_key);
+  return _sb;
 }
 
-// ── Check already logged in ───────────────────────────────────
+// Check already logged in
 (async () => {
-  const sb   = await getSupabase();
+  const sb = await getSb();
   const { data: { session } } = await sb.auth.getSession();
-  if (session) window.location.href = "/dashboard";
+  if (session) await redirectByRole(sb, session.user);
 })();
 
-// ── Login ─────────────────────────────────────────────────────
+async function redirectByRole(sb, user) {
+  const { data: profile } = await sb
+    .from("profiles")
+    .select("role, is_approved, tenant_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile) { showAlert("Profile not found. Contact admin.", "err"); return; }
+  if (!profile.is_approved) {
+    showAlert("Your account is pending admin approval.", "warn");
+    await sb.auth.signOut();
+    return;
+  }
+
+  if (profile.role === "admin") {
+    window.location.href = "/dashboard";
+  } else {
+    window.location.href = "/dashboard/tenant";
+  }
+}
+
 async function login() {
   const email    = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
   const btn      = document.getElementById("login-btn");
   const spinner  = document.getElementById("spinner");
-  const errEl    = document.getElementById("error-msg");
 
-  if (!email || !password) {
-    showError("Please enter your email and password.");
-    return;
-  }
+  if (!email || !password) { showAlert("Please enter email and password.", "err"); return; }
 
   btn.disabled = true;
   spinner.classList.add("show");
-  errEl.classList.remove("show");
+  clearAlert();
 
   try {
-    const sb = await getSupabase();
-    const { data, error } = await sb.auth.signInWithPassword({email, password});
-
-    if (error) {
-      showError(error.message || "Invalid credentials. Please try again.");
-      return;
-    }
-
-    // Redirect to dashboard
-    window.location.href = "/dashboard";
-
+    const sb = await getSb();
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { showAlert(error.message, "err"); return; }
+    await redirectByRole(sb, data.user);
   } catch(e) {
-    showError("Connection error. Is the server running?");
+    showAlert("Connection error. Is the server running?", "err");
   } finally {
     btn.disabled = false;
     spinner.classList.remove("show");
   }
 }
 
-function showError(msg) {
-  const el = document.getElementById("error-msg");
+function showAlert(msg, type) {
+  const el = document.getElementById("alert");
   el.textContent = msg;
-  el.classList.add("show");
+  el.className = "alert " + type;
+}
+function clearAlert() {
+  document.getElementById("alert").className = "alert";
 }
 </script>
 </body>

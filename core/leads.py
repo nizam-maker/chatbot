@@ -145,7 +145,8 @@ def save_lead(
     source:       str = "chatbot"
 ) -> dict | None:
     try:
-        from core.supabase_client import sb
+        from core.supabase_client import sb, get_tenant
+        tenant_row = get_tenant(tenant_id)
         data = {
             "name":       name or "Unknown",
             "phone":      phone,
@@ -153,6 +154,7 @@ def save_lead(
             "source":     source,
             "session_id": session_id,
             "notified":   False,
+            "tenant_id":  tenant_row["id"] if tenant_row else None,
         }
         res = sb.table("customers").upsert(
             data, on_conflict="phone"

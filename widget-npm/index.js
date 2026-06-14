@@ -43,6 +43,9 @@ function initWidget(options) {
 
   var iframe      = document.createElement('iframe');
   iframe.id       = 'chatplatform-widget';
+  iframe.allowTransparency = true;
+  iframe.setAttribute('allowtransparency', 'true');
+  iframe.setAttribute('frameborder', '0');
   iframe.src      = base + '/embed/' + tenant + '?key=' + key + '&tenant=' + tenant;
   iframe.title    = 'Chat widget';
   iframe.setAttribute('allow', 'microphone');
@@ -60,6 +63,7 @@ function initWidget(options) {
     'border:none',
     'z-index:2147483647',
     'background:transparent',
+    'background-color:transparent',
     'pointer-events:all'
   ].join(';');
 

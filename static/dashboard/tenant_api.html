@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>API Manager — ChatPlatform</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1a6f4a;--primary-h:#145a3c;
+  --bg:#f4f3ef;--surface:#fff;--border:#e2e0d8;
+  --text:#1c1c1a;--muted:#7a7870;
+  --success:#1D9E75;--danger:#E24B4A;--warning:#EF9F27;--info:#3B7DD8;
+  --font:"Segoe UI",system-ui,sans-serif;--mono:"Cascadia Code","Fira Mono",monospace;--radius:10px;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+.sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+.sidebar-logo{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;border-radius:8px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700}
+.logo-text{font-size:14px;font-weight:600}.logo-sub{font-size:11px;color:var(--muted)}
+nav{padding:10px 8px;flex:1}
+.nav-section{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:10px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;text-decoration:none;margin-bottom:1px}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:#e8f4ee;color:var(--primary);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px}
+.topbar h1{font-size:16px;font-weight:600}.topbar p{font-size:13px;color:var(--muted)}
+.content{flex:1;overflow-y:auto;padding:24px;max-width:800px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
+.card-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:14px;font-weight:600}
+.card-body{padding:18px}
+.label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px}
+.key-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:13px;display:flex;align-items:center;gap:10px;margin-bottom:12px;word-break:break-all}
+.key-val{flex:1;color:var(--text)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;background:transparent;color:var(--text);cursor:pointer;transition:all .15s}
+.btn:hover{background:var(--bg)}.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-h)}
+.btn-danger{color:var(--danger);border-color:var(--danger)}
+.btn-danger:hover{background:#fce8e8}
+.btn-sm{padding:5px 10px;font-size:12px}
+.field{margin-bottom:12px}
+.field label{font-size:12px;color:var(--muted);font-weight:500;display:block;margin-bottom:4px}
+.field input,.field textarea{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);outline:none;font-family:var(--font)}
+.field textarea{font-family:var(--mono);resize:vertical}
+.field input:focus,.field textarea:focus{border-color:var(--primary)}
+.field-row{display:flex;gap:10px}
+.field-row .field{flex:1}
+.result-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:12px;white-space:pre-wrap;word-break:break-all;margin-top:10px;display:none}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;border:1px solid}
+.badge-ok{background:#e8f4ee;color:var(--success);border-color:#5dcaa5}
+.badge-warn{background:#faeeda;color:#633806;border-color:#efb347}
+.code-block{background:#1a1a1a;border-radius:8px;padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.8;overflow-x:auto;color:#e2e0d8;position:relative;margin-bottom:12px}
+.code-copy{position:absolute;top:8px;right:8px}
+.hl-key{color:#7dd3fc}.hl-val{color:#86efac}.hl-str{color:#fde68a}.hl-com{color:#6b7280}
+.divider{height:1px;background:var(--border);margin:16px 0}
+.info-box{background:#e8effe;border:1px solid #c3d3f7;border-radius:8px;padding:12px 14px;font-size:13px;color:#1a3a7a;line-height:1.6;margin-bottom:14px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:10px 16px;border-radius:9px;font-size:13px;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;z-index:999}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok{background:var(--success)}.toast.err{background:var(--danger)}
+</style>
+</head>
+<body data-roles="tenant,admin">
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark" id="s-initials">CP</div>
+    <div><div class="logo-text" id="s-name">My Dashboard</div><div class="logo-sub">ChatPlatform</div></div>
+  </div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <a href="/dashboard/tenant" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <div class="nav-section">My Chatbot</div>
+    <a href="/dashboard/tenant/analytics" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Analytics
+    </a>
+    <a href="/dashboard/tenant/leads" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      My Leads
+    </a>
+    <a href="/dashboard/tenant/inventory" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      Inventory Data
+    </a>
+    <div class="nav-section">Knowledge</div>
+    <a href="/dashboard/tenant/files" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      File manager
+    </a>
+    <a href="/dashboard/tenant/scraper" class="nav-item">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20"/></svg>
+      Scraper
+    </a>
+    <div class="nav-section">Settings</div>
+    <a href="/dashboard/tenant/api" class="nav-item active">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+      API Manager
+    </a>
+  </nav>
+  <div class="sidebar-footer"></div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1>API Manager</h1>
+      <p id="topbar-sub">Manage your sync key and webhook for two-way communication</p>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Sync Key Card -->
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">Sync Key</span>
+        <span class="badge" id="key-status">Loading...</span>
+      </div>
+      <div class="card-body">
+        <div class="info-box">
+          Your sync key authenticates API calls between your website and ChatPlatform. Use it to push car stock data and receive lead notifications. Keep it secret — treat it like a password.
+        </div>
+
+        <div class="label">Your sync key</div>
+        <div class="key-box">
+          <span class="key-val" id="sync-key-display"><span class="spinner"></span></span>
+          <button class="btn btn-sm" id="toggle-key-btn" onclick="toggleKeyVisibility()" title="Show/hide key">
+            <svg id="eye-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button class="btn btn-sm" onclick="copyKey()" title="Copy key">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="generateKey()">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+            Regenerate key
+          </button>
+          <span style="font-size:12px;color:var(--muted);align-self:center">
+            Last used: <span id="last-used">—</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Webhook Card -->
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">Lead Webhook</span>
+        <span class="badge" id="webhook-status">Not configured</span>
+      </div>
+      <div class="card-body">
+        <div class="info-box">
+          When a lead is captured by your chatbot, ChatPlatform will POST the lead data to this URL in real-time. Your website receives leads instantly without polling.
+        </div>
+        <div class="field">
+          <label>Webhook URL</label>
+          <input type="text" id="webhook-url"
+                 placeholder="https://yoursite.com/api/chatbot/leads"/>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="saveWebhook()">Save webhook URL</button>
+      </div>
+    </div>
+
+    <!-- External Car API Card -->
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">External Car API (live price &amp; stock)</span>
+        <span class="badge" id="extapi-status">Not configured</span>
+      </div>
+      <div class="card-body">
+        <div class="info-box">
+          Optional. If your website has its own API for car list/price/stock, configure it here —
+          the chatbot will call it live for price and stock questions instead of relying only on
+          the data pushed via <code style="font-family:var(--mono)">/api/sync/stock</code>.
+          Leave blank to use the synced data only.
+        </div>
+
+        <div class="field">
+          <label>Base URL</label>
+          <input type="text" id="ext-base-url" placeholder="https://yoursite.com/api"/>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>List path (returns all cars)</label>
+            <input type="text" id="ext-list-path" placeholder="/cars"/>
+          </div>
+          <div class="field">
+            <label>Detail path (use {car_id})</label>
+            <input type="text" id="ext-detail-path" placeholder="/cars/{car_id}"/>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Auth header name</label>
+            <input type="text" id="ext-auth-header" placeholder="X-API-Key"/>
+          </div>
+          <div class="field">
+            <label>Auth header value</label>
+            <input type="text" id="ext-auth-value" placeholder="secret token"/>
+          </div>
+        </div>
+        <div class="field">
+          <label>Field mapping (JSON, optional — maps our field names to yours)</label>
+          <textarea id="ext-field-map" rows="4" placeholder='{"car_id": "sku", "brand": "make", "price_otr": "price", "stock": "qty"}'></textarea>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="saveExternalApi()">Save</button>
+          <button class="btn btn-sm" onclick="testExternalApi()">Test connection</button>
+        </div>
+        <div class="result-box" id="extapi-result"></div>
+      </div>
+    </div>
+
+    <!-- Code Examples Card -->
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">Code examples</span>
+      </div>
+      <div class="card-body">
+
+        <div class="label">Push car stock to ChatPlatform</div>
+        <div class="code-block">
+          <button class="btn btn-sm code-copy" onclick="copyCode('stock-code')" style="background:rgba(255,255,255,0.1);color:#e2e0d8;border-color:rgba(255,255,255,0.2)">Copy</button>
+          <pre id="stock-code"><span class="hl-com">// Next.js API route — push stock when cars update</span>
+<span class="hl-key">const</span> res = <span class="hl-key">await</span> fetch(<span class="hl-str">'https://web-production-f61d6.up.railway.app/api/sync/stock'</span>, {
+  method: <span class="hl-str">'POST'</span>,
+  headers: {
+    <span class="hl-str">'Content-Type'</span>: <span class="hl-str">'application/json'</span>,
+    <span class="hl-str">'X-Sync-Key'</span>: <span class="hl-str">'<span id="code-key-1">YOUR_SYNC_KEY</span>'</span>,
+  },
+  body: JSON.stringify({
+    cars: [
+      {
+        car_id: <span class="hl-str">'PROTON-SAGA-2024'</span>,
+        brand: <span class="hl-str">'Proton'</span>, model: <span class="hl-str">'Saga'</span>, variant: <span class="hl-str">'Premium CVT'</span>,
+        year: <span class="hl-val">2024</span>, price_otr: <span class="hl-val">48800</span>, stock: <span class="hl-val">7</span>,
+        status: <span class="hl-str">'available'</span>, transmission: <span class="hl-str">'CVT'</span>,
+      }
+    ]
+  })
+});</pre>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="label">Receive leads from ChatPlatform (webhook handler)</div>
+        <div class="code-block">
+          <button class="btn btn-sm code-copy" onclick="copyCode('lead-code')" style="background:rgba(255,255,255,0.1);color:#e2e0d8;border-color:rgba(255,255,255,0.2)">Copy</button>
+          <pre id="lead-code"><span class="hl-com">// Next.js API route — app/api/chatbot/leads/route.ts</span>
+<span class="hl-key">export async function</span> POST(req: Request) {
+  <span class="hl-key">const</span> syncKey = req.headers.get(<span class="hl-str">'x-sync-key'</span>);
+  <span class="hl-key">if</span> (syncKey !== process.env.CHATPLATFORM_SYNC_KEY) {
+    <span class="hl-key">return</span> Response.json({ error: <span class="hl-str">'Unauthorized'</span> }, { status: <span class="hl-val">401</span> });
+  }
+
+  <span class="hl-key">const</span> lead = <span class="hl-key">await</span> req.json();
+  <span class="hl-com">// lead = { name, phone, interest, session_id, created_at }</span>
+
+  <span class="hl-key">await</span> saveLeadToFirebase(lead); <span class="hl-com">// your existing function</span>
+  <span class="hl-key">return</span> Response.json({ ok: <span class="hl-val">true</span> });
+}</pre>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="label">Poll for leads manually</div>
+        <div class="code-block">
+          <button class="btn btn-sm code-copy" onclick="copyCode('poll-code')" style="background:rgba(255,255,255,0.1);color:#e2e0d8;border-color:rgba(255,255,255,0.2)">Copy</button>
+          <pre id="poll-code"><span class="hl-com">// GET new unnotified leads</span>
+<span class="hl-key">const</span> res = <span class="hl-key">await</span> fetch(<span class="hl-str">'https://web-production-f61d6.up.railway.app/api/sync/leads'</span>, {
+  headers: { <span class="hl-str">'X-Sync-Key'</span>: <span class="hl-str">'<span id="code-key-2">YOUR_SYNC_KEY</span>'</span> }
+});
+<span class="hl-key">const</span> { leads } = <span class="hl-key">await</span> res.json();
+
+<span class="hl-com">// Mark each lead as received</span>
+<span class="hl-key">for</span> (<span class="hl-key">const</span> lead <span class="hl-key">of</span> leads) {
+  <span class="hl-key">await</span> fetch(
+    <span class="hl-str">`https://web-production-f61d6.up.railway.app/api/sync/leads/${lead.id}/notified`</span>,
+    { method: <span class="hl-str">'PATCH'</span>, headers: { <span class="hl-str">'X-Sync-Key'</span>: <span class="hl-str">'YOUR_SYNC_KEY'</span> } }
+  );
+}</pre>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let tenantId  = null;
+let fullKey   = null;
+let keyHidden = true;
+
+async function init() {
+  await new Promise(r => setTimeout(r, 300));
+  const profile = window._profile;
+  if (!profile?.tenant_id) return;
+  tenantId = profile.tenant_id;
+
+  const t = await fetch(`/api/tenants/${tenantId}`).then(r => r.json());
+  document.getElementById("s-initials").textContent      = t.brand_initials || "CP";
+  document.getElementById("s-initials").style.background = t.brand_color || "#1a6f4a";
+  document.getElementById("s-name").textContent          = t.name || "My Dashboard";
+  document.documentElement.style.setProperty("--primary", t.brand_color || "#1a6f4a");
+
+  await loadKeyData();
+  await loadExternalApi();
+}
+
+async function loadKeyData() {
+  const data = await authedFetch(`/api/tenant/${tenantId}/sync-key`).then(r => r.json());
+  const statusEl = document.getElementById("key-status");
+  const webhookEl = document.getElementById("webhook-status");
+
+  if (data.sync_key) {
+    fullKey = data.sync_key;
+    document.getElementById("sync-key-display").textContent = maskKey(fullKey);
+    statusEl.textContent = "Active";
+    statusEl.className   = "badge badge-ok";
+    // Inject key into code examples
+    document.getElementById("code-key-1").textContent = fullKey;
+    document.getElementById("code-key-2").textContent = fullKey;
+  } else {
+    document.getElementById("sync-key-display").textContent = "No key generated yet — click Regenerate";
+    statusEl.textContent = "Not configured";
+    statusEl.className   = "badge badge-warn";
+  }
+
+  if (data.webhook_url) {
+    document.getElementById("webhook-url").value = data.webhook_url;
+    webhookEl.textContent = "Configured";
+    webhookEl.className   = "badge badge-ok";
+  }
+
+  if (data.last_used_at) {
+    document.getElementById("last-used").textContent =
+      new Date(data.last_used_at).toLocaleDateString("en-MY");
+  }
+}
+
+function maskKey(key) {
+  if (!key) return "—";
+  return key.substring(0, 15) + "••••••••••••" + key.slice(-4);
+}
+
+function toggleKeyVisibility() {
+  keyHidden = !keyHidden;
+  document.getElementById("sync-key-display").textContent =
+    keyHidden ? maskKey(fullKey) : (fullKey || "—");
+}
+
+function copyKey() {
+  if (!fullKey) { toast("No key to copy", "err"); return; }
+  navigator.clipboard.writeText(fullKey).then(() => toast("Key copied!", "ok"));
+}
+
+async function generateKey() {
+  if (!confirm("Regenerate sync key? Your old key will stop working immediately.")) return;
+  const webhookUrl = document.getElementById("webhook-url").value.trim();
+  const res  = await authedFetch(`/api/tenant/${tenantId}/sync-key/generate`, {
+    method:  "POST",
+    headers: {"Content-Type":"application/json"},
+    body:    JSON.stringify({webhook_url: webhookUrl})
+  });
+  const data = await res.json();
+  if (data.status === "ok") {
+    fullKey = data.sync_key;
+    keyHidden = false;
+    toast("New key generated — copy it now!", "ok");
+    await loadKeyData();
+  } else { toast("Failed to generate key", "err"); }
+}
+
+async function saveWebhook() {
+  const url = document.getElementById("webhook-url").value.trim();
+  if (!url) { toast("Please enter a webhook URL", "err"); return; }
+
+  const res  = await authedFetch(`/api/tenant/${tenantId}/sync-key/generate`, {
+    method:  "POST",
+    headers: {"Content-Type":"application/json"},
+    body:    JSON.stringify({webhook_url: url})
+  });
+  const data = await res.json();
+  if (data.status === "ok") {
+    toast("Webhook URL saved ✓", "ok");
+    document.getElementById("webhook-status").textContent = "Configured";
+    document.getElementById("webhook-status").className   = "badge badge-ok";
+  } else { toast("Save failed", "err"); }
+}
+
+async function loadExternalApi() {
+  const data = await authedFetch(`/api/tenant/${tenantId}/external-api`).then(r => r.json());
+  const statusEl = document.getElementById("extapi-status");
+
+  document.getElementById("ext-base-url").value    = data.base_url    || "";
+  document.getElementById("ext-list-path").value   = data.list_path   || "";
+  document.getElementById("ext-detail-path").value = data.detail_path || "";
+  document.getElementById("ext-auth-header").value = data.auth_header || "";
+  document.getElementById("ext-auth-value").value  = data.auth_value  || "";
+  document.getElementById("ext-field-map").value   = data.field_map ? JSON.stringify(data.field_map, null, 2) : "";
+
+  if (data.base_url) {
+    statusEl.textContent = "Configured";
+    statusEl.className   = "badge badge-ok";
+  } else {
+    statusEl.textContent = "Not configured";
+    statusEl.className   = "badge badge-warn";
+  }
+}
+
+async function saveExternalApi() {
+  let fieldMap = null;
+  const rawMap = document.getElementById("ext-field-map").value.trim();
+  if (rawMap) {
+    try { fieldMap = JSON.parse(rawMap); }
+    catch (e) { toast("Field mapping must be valid JSON", "err"); return; }
+  }
+
+  const body = {
+    base_url:    document.getElementById("ext-base-url").value.trim(),
+    list_path:   document.getElementById("ext-list-path").value.trim(),
+    detail_path: document.getElementById("ext-detail-path").value.trim(),
+    auth_header: document.getElementById("ext-auth-header").value.trim(),
+    auth_value:  document.getElementById("ext-auth-value").value.trim(),
+    field_map:   fieldMap,
+  };
+
+  const res = await authedFetch(`/api/tenant/${tenantId}/external-api`, {
+    method:  "PUT",
+    headers: {"Content-Type":"application/json"},
+    body:    JSON.stringify(body)
+  });
+  const data = await res.json();
+  if (res.ok) {
+    toast("External API config saved ✓", "ok");
+    await loadExternalApi();
+  } else {
+    toast(data.error || "Save failed", "err");
+  }
+}
+
+async function testExternalApi() {
+  const box = document.getElementById("extapi-result");
+  box.style.display = "block";
+  box.textContent   = "Testing...";
+
+  const res  = await authedFetch(`/api/tenant/${tenantId}/external-api/test`, {method: "POST"});
+  const data = await res.json();
+  if (res.ok) {
+    box.textContent = `OK — ${data.count} car(s) returned.\nSample:\n` + JSON.stringify(data.sample, null, 2);
+    toast("Connection test succeeded ✓", "ok");
+  } else {
+    box.textContent = `Error: ${data.error || "unknown error"}`;
+    toast("Connection test failed", "err");
+  }
+}
+
+function copyCode(id) {
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.innerText).then(() => toast("Code copied!", "ok"));
+}
+
+function toast(msg, type="ok") {
+  const el=document.getElementById("toast"); el.textContent=msg; el.className=`toast ${type} show`;
+  setTimeout(()=>{el.className="toast";}, 2500);
+}
+
+init();
+</script>
+<script src="/static/dashboard/auth.js"></script>
+</body>
+</html>
