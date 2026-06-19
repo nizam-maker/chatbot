@@ -300,15 +300,19 @@ async function init() {
   if (!profile?.tenant_id) return;
   tenantId = profile.tenant_id;
 
-  const t = await fetch(`/api/tenants/${tenantId}`).then(r => r.json());
-  document.getElementById("s-initials").textContent      = t.brand_initials || "CP";
-  document.getElementById("s-initials").style.background = t.brand_color || "#1a6f4a";
-  document.getElementById("s-name").textContent          = t.name || "My Dashboard";
-  document.getElementById("topbar-sub").textContent      = `${t.name} — items synced from your website`;
-  document.documentElement.style.setProperty("--primary", t.brand_color || "#1a6f4a");
+  const tenantPromise = fetch(`/api/tenants/${tenantId}`).then(r => r.json());
 
-  await loadInventory();
-  await checkLiveApi();
+  await Promise.all([
+    tenantPromise.then(t => {
+      document.getElementById("s-initials").textContent      = t.brand_initials || "CP";
+      document.getElementById("s-initials").style.background = t.brand_color || "#1a6f4a";
+      document.getElementById("s-name").textContent          = t.name || "My Dashboard";
+      document.getElementById("topbar-sub").textContent      = `${t.name} — items synced from your website`;
+      document.documentElement.style.setProperty("--primary", t.brand_color || "#1a6f4a");
+    }),
+    loadInventory(),
+    checkLiveApi(),
+  ]);
 }
 
 async function loadInventory() {
