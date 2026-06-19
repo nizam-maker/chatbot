@@ -480,7 +480,12 @@ async def get_tenants():
 async def get_tenant(slug: str):
     from core.supabase_client import sb, maybe_single
     # Accept either a tenant UUID or a slug
-    t = maybe_single(sb.table("tenants").select("*").eq("id", slug))
+    t = None
+    try:
+        uuid.UUID(slug)
+        t = maybe_single(sb.table("tenants").select("*").eq("id", slug))
+    except ValueError:
+        pass
     if not t:
         t = maybe_single(sb.table("tenants").select("*").eq("slug", slug))
     if not t:
