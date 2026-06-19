@@ -1325,16 +1325,11 @@ async def delete_tenant_inventory_item(tenant_id: str, car_id: str,
 async def sync_inventory_from_api(tenant_id: str,
                                    _profile: dict = Depends(require_tenant_access)):
     """Pull live cars from the tenant's configured external API and upsert into cars table."""
-    from core.supabase_client import sb, get_tenant
+    from core.supabase_client import sb
     from core.tenant_api import fetch_live_cars
     from datetime import datetime, timezone
 
-    tenant_row = get_tenant(tenant_id)
-    if not tenant_row:
-        return JSONResponse({"error": "Tenant not found"}, status_code=404)
-    tenant_uuid = tenant_row["id"]
-
-    cars = fetch_live_cars(tenant_uuid)
+    cars = fetch_live_cars(tenant_id)
     if cars is None:
         return JSONResponse({"error": "No external API configured"}, status_code=400)
     if not cars:
@@ -1342,7 +1337,7 @@ async def sync_inventory_from_api(tenant_id: str,
 
     now = datetime.now(timezone.utc).isoformat()
     for car in cars:
-        car["tenant_id"] = str(tenant_uuid)
+        car["tenant_id"] = str(tenant_id)
         car["updated_at"] = now
 
     sb.table("cars").upsert(cars, on_conflict="car_id").execute()
