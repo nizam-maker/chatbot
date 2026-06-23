@@ -513,7 +513,7 @@ async def create_tenant(req: Request):
         "plan":           body.get("plan", "starter"),
         "billing_mode":   "platform",
         "ai_provider":    "anthropic",
-        "ai_model":       "claude-sonnet-4-20250514",
+        "ai_model":       "claude-sonnet-4-6",
         "is_active":      True,
     }
     res = sb.table("tenants").insert(data).execute()

@@ -15,7 +15,8 @@ from core.analytics import track
 load_dotenv()
 
 _platform_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-MODEL_DEFAULT     = "claude-sonnet-4-20250514"
+MODEL_DEFAULT     = "claude-sonnet-4-6"
+MODEL_HAIKU       = "claude-haiku-4-5-20251001"
 
 
 def _get_client_and_model(tenant_cfg: dict):
@@ -248,27 +249,42 @@ def chat(
     print(f"[debug] lead_updates={lead_updates}", flush=True)
     session.update(lead_updates)
 
-    # 5. Build system prompt — inject all context layers
-    system = tenant_cfg["SYSTEM_PROMPT"]
+    # 5. Build system prompt — static tenant prompt (cached) + dynamic context
+    #    Splitting these into separate blocks lets Claude cache the tenant
+    #    prompt across requests (it rarely changes), so only the dynamic
+    #    part (DB/RAG context, lead prompt, summary) is billed at full price.
+    dynamic_parts = []
 
     if db_context:
-        system += f"\n\n{db_context}"
+        dynamic_parts.append(db_context)
     if context:
-        system += f"\n\n[Knowledge base — brochures & specs]\n{context}"
+        dynamic_parts.append(f"[Knowledge base — brochures & specs]\n{context}")
     if db_context and context:
-        system += ("\n\nNote: if price or stock figures conflict between the "
-                   "structured database and the knowledge base, always use the "
-                   "structured database — it is more current.")
+        dynamic_parts.append(
+            "Note: if price or stock figures conflict between the "
+            "structured database and the knowledge base, always use the "
+            "structured database — it is more current."
+        )
 
     # Inject lead capture prompt if intent detected
     if should_ask_for_contact(session):
-        system += get_lead_prompt(session.get("car_interest", ""))
+        dynamic_parts.append(get_lead_prompt(session.get("car_interest", "")))
         session["contact_asked"] = True
 
     if session.get("summary"):
-        system += f"\n\n[Customer saga so far]\n{session['summary']}"
+        dynamic_parts.append(f"[Customer saga so far]\n{session['summary']}")
     if session.get("customer_name"):
-        system += f"\n\nCustomer name: {session['customer_name']}"
+        dynamic_parts.append(f"Customer name: {session['customer_name']}")
+
+    system = [
+        {
+            "type":          "text",
+            "text":          tenant_cfg["SYSTEM_PROMPT"],
+            "cache_control": {"type": "ephemeral"},
+        }
+    ]
+    if dynamic_parts:
+        system.append({"type": "text", "text": "\n\n".join(dynamic_parts)})
 
     # 5. Build message history (last 10 turns from memory)
     messages = session["messages"] + [
@@ -277,6 +293,12 @@ def chat(
 
     # 6. Get correct client + model (platform or BYOK)
     client, model = _get_client_and_model(tenant_cfg)
+
+    # Route simple, low-stakes messages (no DB/RAG context retrieved, short
+    # text) to the cheaper Haiku model. Only applies to platform-billed
+    # tenants — BYOK tenants keep whatever model they explicitly chose.
+    if model == MODEL_DEFAULT and not db_context and not context and len(user_msg) < 80:
+        model = MODEL_HAIKU
 
     # 7. Call Claude
     response = client.messages.create(
