@@ -1,0 +1,45 @@
+<div class="sidebar-logo">
+  <div class="logo-mark" id="s-initials">CP</div>
+  <div><div class="logo-text" id="s-name">My Dashboard</div><div class="logo-sub">ChatPlatform</div></div>
+</div>
+<nav>
+  <div class="nav-section">Overview</div>
+  <a href="/dashboard/tenant" class="nav-item{{ ' active' if active_nav == 'overview' else '' }}"
+     hx-get="/dashboard/tenant" hx-target="#main-swap" hx-swap="innerHTML" hx-push-url="true">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Dashboard
+  </a>
+  <div class="nav-section">My Chatbot</div>
+  <a href="/dashboard/tenant/analytics" class="nav-item{{ ' active' if active_nav == 'analytics' else '' }}">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Analytics
+  </a>
+  <a href="/dashboard/tenant/leads" class="nav-item{{ ' active' if active_nav == 'leads' else '' }}"
+     hx-get="/dashboard/tenant/leads" hx-target="#main-swap" hx-swap="innerHTML" hx-push-url="true">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+    My Leads
+  </a>
+  <a href="/dashboard/tenant/inventory" class="nav-item{{ ' active' if active_nav == 'inventory' else '' }}"
+     hx-get="/dashboard/tenant/inventory" hx-target="#main-swap" hx-swap="innerHTML" hx-push-url="true">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+    Inventory Data
+  </a>
+  <div class="nav-section">Knowledge</div>
+  <a href="/dashboard/tenant/files" class="nav-item{{ ' active' if active_nav == 'files' else '' }}"
+     hx-get="/dashboard/tenant/files" hx-target="#main-swap" hx-swap="innerHTML" hx-push-url="true">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    File manager
+  </a>
+  <a href="/dashboard/tenant/scraper" class="nav-item{{ ' active' if active_nav == 'scraper' else '' }}"
+     hx-get="/dashboard/tenant/scraper" hx-target="#main-swap" hx-swap="innerHTML" hx-push-url="true">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20"/></svg>
+    Scraper
+  </a>
+  <div class="nav-section">Settings</div>
+  <a href="/dashboard/tenant/api" class="nav-item{{ ' active' if active_nav == 'api' else '' }}"
+     hx-get="/dashboard/tenant/api" hx-target="#main-swap" hx-swap="innerHTML" hx-push-url="true">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+    API Manager
+  </a>
+</nav>
+<div class="sidebar-footer"></div>

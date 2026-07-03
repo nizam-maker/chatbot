@@ -1,0 +1,144 @@
+{% extends request_layout %}
+{% block title %}File Manager{% endblock %}
+{% block extra_head %}
+<style>
+.upload-zone{background:var(--surface);border:2px dashed var(--border);border-radius:var(--radius);padding:28px;text-align:center;margin-bottom:16px;cursor:pointer;transition:all .2s;position:relative}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--primary);background:#f0faf5}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{width:40px;height:40px;border-radius:10px;background:#e8f4ee;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.upload-title{font-size:14px;font-weight:500;margin-bottom:4px}
+.upload-sub{font-size:12px;color:var(--muted)}
+.upload-config{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.upload-progress{display:none;margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.progress-bar{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;background:var(--primary);border-radius:3px;transition:width .3s;width:0%}
+.d-badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px}
+.d-car{background:#e8f4ee;color:#085041}
+.d-rebate{background:#faeeda;color:#633806}
+.d-faq{background:#eeedfe;color:#3C3489}
+.d-news{background:#fce8e8;color:#712B13}
+table{table-layout:fixed}
+td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+</style>
+{% endblock %}
+{% block page_title %}File manager{% endblock %}
+{% block page_sub %}Upload and manage knowledge base documents{% endblock %}
+{% block topbar_actions %}
+<button class="btn" onclick="loadFiles()">
+  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+  Refresh
+</button>
+{% endblock %}
+{% block content %}
+
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-label">Total files</div>
+    <div class="stat-val" id="s-total">—</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Active</div>
+    <div class="stat-val green" id="s-active">—</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Active chunks</div>
+    <div class="stat-val" id="s-chunks">—</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total size</div>
+    <div class="stat-val" id="s-size">—</div>
+  </div>
+</div>
+
+<div class="upload-zone" id="drop-zone"
+     ondragover="event.preventDefault();this.classList.add('drag')"
+     ondragleave="this.classList.remove('drag')"
+     ondrop="handleDrop(event)">
+  <input type="file" id="file-input" accept=".pdf,.txt,.csv"
+         onchange="handleFileSelect(this.files)" multiple/>
+  <div class="upload-icon">
+    <svg width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/>
+      <line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+  </div>
+  <div class="upload-title">Drop files here or click to browse</div>
+  <div class="upload-sub">Supports PDF, TXT, CSV &mdash; max 50MB per file</div>
+</div>
+
+<div class="upload-config" id="upload-config" style="display:none">
+  <div class="field">
+    <label>Selected file</label>
+    <input type="text" id="f-filename" readonly style="width:220px;color:var(--muted)"/>
+  </div>
+  <div class="field">
+    <label>Knowledge domain</label>
+    <select id="f-domain">
+      <option value="car_specs">car_specs</option>
+      <option value="rebates_promos">rebates_promos</option>
+      <option value="faq_support">faq_support</option>
+      <option value="surat_khabar">surat_khabar</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>Brand (optional)</label>
+    <input type="text" id="f-brand" placeholder="e.g. Proton" style="width:120px"/>
+  </div>
+  <div class="field">
+    <label>Model (optional)</label>
+    <input type="text" id="f-model" placeholder="e.g. Saga" style="width:120px"/>
+  </div>
+  <button class="btn btn-primary" onclick="uploadFile()">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Upload &amp; ingest
+  </button>
+  <button class="btn" onclick="cancelUpload()">Cancel</button>
+</div>
+
+<div class="upload-progress" id="upload-progress">
+  <div style="font-size:13px;font-weight:500" id="progress-label">Uploading...</div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+</div>
+
+<div class="table-wrap">
+  <div class="table-toolbar">
+    <input type="text" id="search"
+           placeholder="Search by filename..."
+           oninput="renderFilesTable()"/>
+    <select id="filter-domain" onchange="renderFilesTable()">
+      <option value="">All domains</option>
+      <option value="car_specs">car_specs</option>
+      <option value="rebates_promos">rebates_promos</option>
+      <option value="faq_support">faq_support</option>
+      <option value="surat_khabar">surat_khabar</option>
+    </select>
+    <select id="filter-status" onchange="renderFilesTable()">
+      <option value="">All status</option>
+      <option value="1">Active</option>
+      <option value="0">Disabled</option>
+    </select>
+    <span style="font-size:12px;color:var(--muted)" id="row-count"></span>
+  </div>
+  <table>
+    <colgroup>
+      <col style="width:30%"><col style="width:16%"><col style="width:8%">
+      <col style="width:8%"><col style="width:10%"><col style="width:13%">
+      <col style="width:8%"><col style="width:7%">
+    </colgroup>
+    <thead>
+      <tr>
+        <th>File name</th><th>Domain</th><th>Type</th>
+        <th>Chunks</th><th>Size</th><th>Uploaded</th>
+        <th>Active</th><th></th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr><td colspan="8" class="empty-state">
+        <span class="spinner"></span> Loading...
+      </td></tr>
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

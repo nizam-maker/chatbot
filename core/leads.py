@@ -104,6 +104,17 @@ def extract_phone(text: str) -> str | None:
     return None
 
 
+def has_incomplete_phone(text: str) -> bool:
+    """
+    True if the message contains a digit run that looks like an attempted
+    phone number but is too short/long to pass extract_phone's validation —
+    used to ask the customer to re-confirm instead of silently dropping it.
+    """
+    cleaned = text.replace("telefon", "").replace("teleforn", "") \
+                  .replace("phone", "").replace("nombor", "").replace("number", "")
+    return bool(re.search(r"\d{7,9}\b", cleaned)) and not re.search(r"\d{10,12}\b", cleaned)
+
+
 def extract_name(text: str) -> str | None:
     for pattern in NAME_PATTERNS:
         match = re.search(pattern, text, re.IGNORECASE)
@@ -243,6 +254,8 @@ def process_lead_from_message(
 
     phone = extract_phone(user_msg)
     if not phone:
+        if has_incomplete_phone(user_msg):
+            updates["phone_invalid_hint"] = True
         return updates
 
     name = (
@@ -252,13 +265,19 @@ def process_lead_from_message(
     )
     car_interest = session.get("car_interest", "")
 
-    save_lead(
+    saved = save_lead(
         session_id   = session.get("session_id", ""),
         tenant_id    = tenant_id,
         name         = name,
         phone        = phone,
         car_interest = car_interest,
     )
+
+    if saved is None:
+        # DB write failed — do not tell the model (or the customer) it succeeded.
+        updates["lead_save_failed"] = True
+        logger.error(f"[leads] ✗ Lead save failed: {name} {phone} — {car_interest}")
+        return updates
 
     from core.analytics import track as track_event
     track_event("lead_captured", tenant_id,
@@ -272,7 +291,8 @@ def process_lead_from_message(
         session_id   = session.get("session_id", ""),
     )
 
-    updates["lead_captured"] = True
-    updates["customer_name"] = name or session.get("customer_name", "")
+    updates["lead_captured"]  = True
+    updates["lead_just_saved"] = {"name": name or "the customer", "phone": phone}
+    updates["customer_name"]  = name or session.get("customer_name", "")
     logger.info(f"[leads] ✓ Lead captured: {name} {phone} — {car_interest}")
     return updates

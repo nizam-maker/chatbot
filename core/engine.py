@@ -271,6 +271,31 @@ def chat(
         dynamic_parts.append(get_lead_prompt(session.get("car_interest", "")))
         session["contact_asked"] = True
 
+    # Ground the model's reply in what actually happened on the backend —
+    # never let it improvise a "your info is recorded" confirmation that
+    # didn't really happen.
+    if lead_updates.get("lead_just_saved"):
+        saved = lead_updates["lead_just_saved"]
+        dynamic_parts.append(
+            f"LEAD CAPTURE RESULT: Successfully recorded — name: {saved['name']}, "
+            f"phone: {saved['phone']}. Confirm this to the customer and let them "
+            "know the sales team will contact them soon."
+        )
+    elif lead_updates.get("phone_invalid_hint"):
+        dynamic_parts.append(
+            "LEAD CAPTURE RESULT: The customer just provided a phone number that "
+            "looks incomplete or invalid (Malaysian mobile numbers have 10-11 "
+            "digits). Do NOT say their information has been recorded. Instead, "
+            "politely point out the number looks incomplete and ask them to "
+            "re-confirm it."
+        )
+    elif lead_updates.get("lead_save_failed"):
+        dynamic_parts.append(
+            "LEAD CAPTURE RESULT: Saving the customer's contact info just failed "
+            "on the backend. Do NOT say their information has been recorded. "
+            "Apologize briefly and ask them to repeat their name and phone number."
+        )
+
     if session.get("summary"):
         dynamic_parts.append(f"[Customer saga so far]\n{session['summary']}")
     if session.get("customer_name"):

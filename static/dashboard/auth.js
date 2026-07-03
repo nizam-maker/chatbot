@@ -13,6 +13,9 @@
 // ─────────────────────────────────────────────────────────────
 
 (async function() {
+  let resolveProfile, rejectProfile;
+  window._profileReady = new Promise((res, rej) => { resolveProfile = res; rejectProfile = rej; });
+
   // Load Supabase JS SDK
   if (!window.supabase) {
     await new Promise((resolve, reject) => {
@@ -55,6 +58,7 @@
   // Check session
   const { data: { session } } = await sb.auth.getSession();
   if (!session) {
+    rejectProfile(new Error("no session"));
     window.location.href = "/dashboard/login";
     return;
   }
@@ -67,6 +71,7 @@
     .single();
 
   if (!profile || !profile.is_approved) {
+    rejectProfile(new Error("profile not approved"));
     await sb.auth.signOut();
     window.location.href = "/dashboard/login";
     return;
@@ -75,6 +80,7 @@
   // Check page role requirements
   const allowedRoles = (document.body.dataset.roles || "admin").split(",");
   if (!allowedRoles.includes(profile.role)) {
+    rejectProfile(new Error("role mismatch"));
     // Redirect to correct dashboard
     window.location.href = profile.role === "admin"
       ? "/dashboard"
@@ -84,6 +90,7 @@
 
   // Store profile globally for page scripts to use
   window._profile = profile;
+  resolveProfile(profile);
 
   // Inject sidebar footer
   const footer = document.querySelector(".sidebar-footer");

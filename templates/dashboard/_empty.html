@@ -1,0 +1,11 @@
+<div class="topbar">
+  <div>
+    <h1>{% block page_title %}{% endblock %}</h1>
+    <p id="topbar-sub">{% block page_sub %}{% endblock %}</p>
+  </div>
+  <div class="topbar-actions">{% block topbar_actions %}{% endblock %}</div>
+</div>
+<div class="content" id="content">
+  {% block content %}{% endblock %}
+</div>
+{% block modals %}{% endblock %}
