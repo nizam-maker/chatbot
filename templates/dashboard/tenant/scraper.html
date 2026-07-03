@@ -1,0 +1,65 @@
+{% extends request_layout %}
+{% block title %}Scraper Manager{% endblock %}
+{% block extra_head %}
+<style>
+.add-form{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+.add-form-title{font-size:13px;font-weight:500;margin-bottom:12px}
+.add-form-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:8px;align-items:end}
+.field label{display:block;margin-bottom:3px}
+.field input,.field select{width:100%}
+table{table-layout:fixed}
+td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+</style>
+{% endblock %}
+{% block page_title %}Scraper manager{% endblock %}
+{% block page_sub %}Manage URLs for automated website scraping{% endblock %}
+{% block topbar_actions %}
+<button class="btn" onclick="loadURLs()">Refresh</button>
+<button class="btn btn-primary" onclick="runAll()">
+  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+  Run all now
+</button>
+{% endblock %}
+{% block content %}
+
+<div class="stats">
+  <div class="stat-card"><div class="stat-label">Total URLs</div><div class="stat-val" id="s-total">—</div></div>
+  <div class="stat-card"><div class="stat-label">Success</div><div class="stat-val green" id="s-ok">—</div></div>
+  <div class="stat-card"><div class="stat-label">Failed</div><div class="stat-val red" id="s-fail">—</div></div>
+  <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-val amber" id="s-pending">—</div></div>
+</div>
+
+<div class="add-form">
+  <div class="add-form-title">
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px;margin-right:5px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Add new URL
+  </div>
+  <div class="add-form-grid">
+    <div class="field"><label>URL</label><input type="text" id="f-url" placeholder="https://..."/></div>
+    <div class="field"><label>Brand</label><input type="text" id="f-brand" placeholder="Perodua"/></div>
+    <div class="field"><label>Model</label><input type="text" id="f-model" placeholder="Myvi"/></div>
+    <div class="field"><label>Domain</label>
+      <select id="f-domain">
+        <option value="car_specs">car_specs</option>
+        <option value="rebates_promos">rebates_promos</option>
+        <option value="faq_support">faq_support</option>
+        <option value="surat_khabar">surat_khabar</option>
+      </select>
+    </div>
+    <div class="field"><label>&nbsp;</label><button class="btn btn-primary" onclick="addURL()">Add URL</button></div>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <div class="table-toolbar">
+    <input type="text" id="search" placeholder="Search URLs..." oninput="renderScraperTable()"/>
+    <span style="font-size:12px;color:var(--muted)" id="row-count"></span>
+  </div>
+  <table>
+    <colgroup><col style="width:5%"><col style="width:30%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:12%"><col style="width:8%"></colgroup>
+    <thead><tr><th>On</th><th>URL</th><th>Brand / Model</th><th>Domain</th><th>Status</th><th>Last scraped</th><th></th></tr></thead>
+    <tbody id="tbody"><tr><td colspan="7" class="empty-state"><span class="spinner"></span> Loading...</td></tr></tbody>
+  </table>
+</div>
+
+{% endblock %}

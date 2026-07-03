@@ -94,6 +94,9 @@ os.makedirs("uploads", exist_ok=True)
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
+from fastapi.templating import Jinja2Templates
+templates = Jinja2Templates(directory="templates")
+
 
 # ── Chat UI ───────────────────────────────────────────────────
 
@@ -1457,58 +1460,47 @@ async def register_page():
     return HTMLResponse("<h2>Register page not found</h2>", status_code=404)
 
 
+def _tenant_template_response(request: Request, template_name: str, active_nav: str):
+    """
+    Renders a tenant dashboard page. Full shell on direct navigation/refresh,
+    or a bare fragment (swapped into #main-swap) on HTMX-driven nav clicks.
+    """
+    layout = "dashboard/_empty.html" if request.headers.get("hx-request") else "dashboard/shell.html"
+    return templates.TemplateResponse(
+        request,
+        template_name,
+        {"request_layout": layout, "active_nav": active_nav},
+    )
+
+
 @app.get("/dashboard/tenant", response_class=HTMLResponse)
-async def tenant_dashboard():
-    html_path = "static/dashboard/tenant.html"
-    if os.path.exists(html_path):
-        with open(html_path, encoding="utf-8") as f:
-            return HTMLResponse(f.read())
-    return HTMLResponse("<h2>Tenant dashboard not found</h2>", status_code=404)
+async def tenant_dashboard(request: Request):
+    return _tenant_template_response(request, "dashboard/tenant/overview.html", "overview")
 
 
 @app.get("/dashboard/tenant/files", response_class=HTMLResponse)
-async def tenant_files_page():
-    html_path = "static/dashboard/tenant_files.html"
-    if os.path.exists(html_path):
-        with open(html_path, encoding="utf-8") as f:
-            return HTMLResponse(f.read())
-    return HTMLResponse("<h2>Page not found</h2>", status_code=404)
+async def tenant_files_page(request: Request):
+    return _tenant_template_response(request, "dashboard/tenant/files.html", "files")
 
 
 @app.get("/dashboard/tenant/scraper", response_class=HTMLResponse)
-async def tenant_scraper_page():
-    html_path = "static/dashboard/tenant_scraper.html"
-    if os.path.exists(html_path):
-        with open(html_path, encoding="utf-8") as f:
-            return HTMLResponse(f.read())
-    return HTMLResponse("<h2>Page not found</h2>", status_code=404)
+async def tenant_scraper_page(request: Request):
+    return _tenant_template_response(request, "dashboard/tenant/scraper.html", "scraper")
 
 
 @app.get("/dashboard/tenant/api", response_class=HTMLResponse)
-async def tenant_api_page():
-    html_path = "static/dashboard/tenant_api.html"
-    if os.path.exists(html_path):
-        with open(html_path, encoding="utf-8") as f:
-            return HTMLResponse(f.read())
-    return HTMLResponse("<h2>Page not found</h2>", status_code=404)
+async def tenant_api_page(request: Request):
+    return _tenant_template_response(request, "dashboard/tenant/api.html", "api")
 
 
 @app.get("/dashboard/tenant/leads", response_class=HTMLResponse)
-async def tenant_leads_page():
-    html_path = "static/dashboard/tenant_leads.html"
-    if os.path.exists(html_path):
-        with open(html_path, encoding="utf-8") as f:
-            return HTMLResponse(f.read())
-    return HTMLResponse("<h2>Page not found</h2>", status_code=404)
+async def tenant_leads_page(request: Request):
+    return _tenant_template_response(request, "dashboard/tenant/leads.html", "leads")
 
 
 @app.get("/dashboard/tenant/inventory", response_class=HTMLResponse)
-async def tenant_inventory_page():
-    html_path = "static/dashboard/tenant_inventory.html"
-    if os.path.exists(html_path):
-        with open(html_path, encoding="utf-8") as f:
-            return HTMLResponse(f.read())
-    return HTMLResponse("<h2>Page not found</h2>", status_code=404)
+async def tenant_inventory_page(request: Request):
+    return _tenant_template_response(request, "dashboard/tenant/inventory.html", "inventory")
 
 
 @app.get("/dashboard/accounts", response_class=HTMLResponse)

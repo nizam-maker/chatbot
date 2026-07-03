@@ -1,0 +1,60 @@
+{% extends request_layout %}
+{% block title %}My Leads{% endblock %}
+{% block extra_head %}
+<style>
+.phone-link{color:var(--primary);text-decoration:none;font-family:var(--mono);font-size:12px}
+.phone-link:hover{text-decoration:underline}
+</style>
+{% endblock %}
+{% block page_title %}My Leads{% endblock %}
+{% block page_sub %}Contacts captured by your chatbot{% endblock %}
+{% block topbar_actions %}
+<button class="btn" onclick="loadLeads()">
+  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+  Refresh
+</button>
+{% endblock %}
+{% block content %}
+
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-label">Total leads</div>
+    <div class="stat-val" id="s-total">—</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Notified</div>
+    <div class="stat-val green" id="s-notified">—</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Pending</div>
+    <div class="stat-val amber" id="s-pending">—</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Last captured</div>
+    <div class="stat-val" id="s-last" style="font-size:14px">—</div>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <div class="table-toolbar">
+    <input type="text" id="search" placeholder="Search by name, phone or interest..." oninput="renderLeadsTable()"/>
+    <span style="font-size:12px;color:var(--muted)" id="row-count"></span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>Interest</th>
+        <th>Source</th>
+        <th>Captured</th>
+        <th>Notified</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr><td colspan="6" class="empty-state"><span class="spinner"></span> Loading...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
