@@ -33,9 +33,12 @@
 
 <div class="info-box">
   This data is synced from your website via <code style="font-family:var(--mono)">/api/sync/stock</code>
-  (see API Manager). If a live external API is configured, price &amp; stock shown to customers in chat
-  may be more recent than this table.
+  (see API Manager). <strong>Sync from API</strong> pulls the latest stock, specs and rebates from your
+  configured endpoints and writes them into this table — that's what the chatbot answers from.
+  <strong>Refresh</strong> only re-reads this page.
 </div>
+
+<div class="info-box" id="sync-result" style="display:none"></div>
 
 <div class="stats">
   <div class="stat-card">

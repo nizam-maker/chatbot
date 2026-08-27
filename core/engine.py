@@ -47,6 +47,90 @@ def _get_client_and_model(tenant_cfg: dict):
     return _platform_client, MODEL_DEFAULT
 
 
+# Spelling variants customers use that don't appear in the catalogue itself.
+_MODEL_ALIASES = {"hrv": "HR-V", "hr v": "HR-V", "crv": "CR-V", "cr v": "CR-V"}
+
+_CATALOGUE_CACHE: dict = {}
+_CATALOGUE_TTL   = 300  # seconds
+
+
+def _catalogue_terms(tenant_uuid: str | None) -> tuple[dict, dict]:
+    """
+    Build {keyword: canonical} maps for brands and models from the tenant's
+    cars table. Cached briefly — this runs on every message, but the
+    catalogue changes only when a sync runs.
+    """
+    if not tenant_uuid:
+        return {}, {}
+
+    import time
+    hit = _CATALOGUE_CACHE.get(tenant_uuid)
+    if hit and time.time() - hit[0] < _CATALOGUE_TTL:
+        return hit[1], hit[2]
+
+    from core.supabase_client import sb
+    rows = sb.table("cars").select("brand,model") \
+             .eq("tenant_id", tenant_uuid).execute().data or []
+
+    brands = {r["brand"].lower(): r["brand"] for r in rows if r.get("brand")}
+    models = {r["model"].lower(): r["model"] for r in rows if r.get("model")}
+    for alias, canonical in _MODEL_ALIASES.items():
+        if canonical.lower() in models:
+            models[alias] = canonical
+
+    _CATALOGUE_CACHE[tenant_uuid] = (time.time(), brands, models)
+    return brands, models
+
+
+def _rebate_label(r: dict) -> str:
+    """Customer-facing wording for one rebate."""
+    return (r.get("rebate_display") or r.get("rebate_name")
+            or r.get("description") or r.get("rebate_type") or "").strip()
+
+
+def _format_rebates(rebates: list[dict]) -> str:
+    """
+    Render a car's rebates for the prompt.
+
+    Cash rebates and freebies are kept apart on purpose: a freebie carries
+    amount 0 with its worth in `freebie_value`, so folding it into the cash
+    total would have the bot quote a discount that was never offered.
+    Eligibility flags are surfaced so the bot caveats rather than promises.
+    """
+    if not rebates:
+        return ""
+
+    cash, freebies = [], []
+    for r in rebates:
+        amount = float(r.get("amount") or 0)
+        if amount > 0:
+            cash.append(r)
+        elif r.get("rebate_type") == "freebie" or r.get("freebie_value"):
+            freebies.append(r)
+
+    parts = []
+    if cash:
+        total  = sum(float(r.get("amount") or 0) for r in cash)
+        labels = ", ".join(dict.fromkeys(filter(None, (_rebate_label(r) for r in cash))))
+        parts.append(f"Rebat: RM{total:,.0f}" + (f" ({labels})" if labels else ""))
+    if freebies:
+        labels = ", ".join(dict.fromkeys(filter(None, (_rebate_label(r) for r in freebies))))
+        parts.append("Percuma: " + (labels or "hadiah promosi"))
+
+    if not parts:
+        return ""
+
+    caveats = []
+    if any(r.get("requires_code") for r in rebates):
+        caveats.append("perlu kod promo")
+    if any(r.get("new_customer_only") for r in rebates):
+        caveats.append("pelanggan baharu sahaja")
+    if caveats:
+        parts.append("Syarat: " + ", ".join(caveats))
+
+    return " | " + " | ".join(parts)
+
+
 def _db_context(user_msg: str, tenant_id: str) -> str:
     """
     Query Supabase for cars and rebates based on message keywords.
@@ -57,34 +141,33 @@ def _db_context(user_msg: str, tenant_id: str) -> str:
     """
     try:
         from core.supabase_client import sb, get_tenant
-        from core.tenant_api import fetch_live_cars
+        from core.tenant_api import (fetch_live_cars, fetch_live_specs,
+                                     fetch_live_news, fetch_live_rebates)
 
         tenant_row  = get_tenant(tenant_id)
         tenant_uuid = tenant_row["id"] if tenant_row else None
 
         msg_lower = user_msg.lower()
 
-        # Detect brand mentions
-        brands = {
-            "perodua": "Perodua", "proton": "Proton",
-            "honda":   "Honda",   "toyota": "Toyota"
-        }
+        news_kw = ["berita", "news", "terkini", "update", "pengumuman", "announcement"]
+        spec_kw = ["spec", "spesifikasi", "horsepower", "torque", "dimension", "kuasa"]
+        rebate_kw = ["rebat", "rebate", "diskaun", "discount", "promosi", "promo"]
+        wants_news = any(k in msg_lower for k in news_kw)
+        wants_spec = any(k in msg_lower for k in spec_kw)
+        wants_rebate = any(k in msg_lower for k in rebate_kw)
 
-        # Detect model mentions
-        models = {
-            "axia":  "Axia",   "myvi":  "Myvi",   "bezza": "Bezza",
-            "ativa": "Ativa",  "alza":  "Alza",
-            "saga":  "Saga",   "x50":   "X50",    "x70":   "X70",
-            "s70":   "S70",
-            "city":  "City",   "hr-v":  "HR-V",   "hrv":   "HR-V",
-            "civic": "Civic",
-            "vios":  "Vios",   "yaris": "Yaris",  "veloz": "Veloz",
-        }
+        # Brands and models are read from the tenant's own catalogue rather
+        # than hardcoded — a hardcoded list silently misses whatever the
+        # tenant adds, and the question then falls through to a generic
+        # cheapest-cars answer about the wrong cars entirely.
+        brands, models = _catalogue_terms(tenant_uuid)
 
         matched_brand = next(
             (v for k, v in brands.items() if k in msg_lower), None)
+        # Longest first, so "city hatchback" wins over "city".
         matched_model = next(
-            (v for k, v in models.items() if k in msg_lower), None)
+            (v for k, v in sorted(models.items(), key=lambda kv: -len(kv[0]))
+             if k in msg_lower), None)
 
         # Price range detection
         max_price = None
@@ -104,15 +187,63 @@ def _db_context(user_msg: str, tenant_id: str) -> str:
         general_kw = ["harga", "price", "murah", "mahal", "stok",
                       "stock", "rebat", "rebate", "promosi", "promo",
                       "loan", "pinjaman", "spec", "spesifikasi",
-                      "kereta", "car", "beli", "buy"]
-        if not matched_brand and not matched_model and not max_price:
+                      "kereta", "car", "beli", "buy"] + news_kw
+        if not matched_brand and not matched_model and not max_price \
+                and not wants_news:
             if not any(k in msg_lower for k in general_kw):
                 return ""
+
+        # News/updates — not car-scoped, handled separately from the cars query.
+        news_lines = []
+        if wants_news:
+            live_news = fetch_live_news(tenant_uuid) if tenant_uuid else None
+            if live_news:
+                for n in live_news[:5]:
+                    if n.get("title"):
+                        news_lines.append(f"• {n['title']}" + (f" — {n['body']}" if n.get("body") else ""))
+            elif tenant_uuid:
+                cached = sb.table("news_updates").select("*") \
+                    .eq("tenant_id", tenant_uuid) \
+                    .order("published_at", desc=True).limit(5).execute().data or []
+                for n in cached:
+                    news_lines.append(f"• {n['title']}" + (f" — {n['body']}" if n.get("body") else ""))
+
+            # Pure news question (no car/price signal) — return news only.
+            car_kw = [k for k in general_kw if k not in news_kw]
+            if not matched_brand and not matched_model and not max_price \
+                    and not any(k in msg_lower for k in car_kw):
+                if not news_lines:
+                    return ""
+                return "[Latest news & updates]\n" + "\n".join(news_lines)
+
+        # ── Rebates ───────────────────────────────────────────
+        # Fetched before the cars query so a rebate question can be scoped
+        # to cars that actually carry one. Live API first, cached table as
+        # fallback — same pattern as cars/specs/news.
+        rebates_by_car = {}
+        live_rebates = fetch_live_rebates(tenant_uuid) if tenant_uuid else None
+        if live_rebates:
+            for r in live_rebates:
+                if r.get("car_id") and r.get("amount") and r.get("is_active", True):
+                    rebates_by_car.setdefault(r["car_id"], []).append(r)
+        elif tenant_uuid:
+            cached_rebates = sb.table("rebates").select("*") \
+                .eq("tenant_id", tenant_uuid).eq("is_active", True) \
+                .execute().data or []
+            for r in cached_rebates:
+                if r.get("car_id"):
+                    rebates_by_car.setdefault(r["car_id"], []).append(r)
 
         # ── Query Supabase ────────────────────────────────────
         q = sb.table("cars").select("*").eq("status", "available")
         if tenant_uuid:
             q = q.eq("tenant_id", tenant_uuid)
+
+        # "Ada rebate tak?" with no car named — show cars that have a
+        # rebate, not simply the cheapest ones.
+        if wants_rebate and rebates_by_car \
+                and not matched_brand and not matched_model and not max_price:
+            q = q.in_("car_id", list(rebates_by_car))
 
         if matched_brand:
             q = q.ilike("brand", f"%{matched_brand}%")
@@ -123,6 +254,33 @@ def _db_context(user_msg: str, tenant_id: str) -> str:
 
         cars = q.order("price_otr").limit(8).execute().data or []
 
+        # The customer named a car and we stock it, but every variant is
+        # sold out. Answer with the real reason rather than no context at
+        # all — an empty context invites the model to guess at prices.
+        sold_out = False
+        if not cars and (matched_brand or matched_model):
+            q_any = sb.table("cars").select("*")
+            if tenant_uuid:
+                q_any = q_any.eq("tenant_id", tenant_uuid)
+            if matched_brand:
+                q_any = q_any.ilike("brand", f"%{matched_brand}%")
+            if matched_model:
+                q_any = q_any.ilike("model", f"%{matched_model}%")
+            cars = q_any.order("price_otr").limit(8).execute().data or []
+            sold_out = bool(cars)
+
+        # A rebate question with nothing to show means there are no active
+        # promotions — say so, instead of falling through to a list of
+        # unrelated cars that carry no rebate at all.
+        if wants_rebate and not rebates_by_car \
+                and not matched_brand and not matched_model and not max_price:
+            return ("[Rebat & promosi]\n"
+                    "Tiada rebat atau promosi aktif buat masa ini.")
+
+        if wants_rebate and not cars and not matched_brand and not matched_model:
+            return ("[Rebat & promosi]\n"
+                    "Tiada rebat atau promosi aktif buat masa ini.")
+
         # General question — return top available cars
         if not cars and not matched_brand and not matched_model:
             q2 = sb.table("cars").select("*").eq("status", "available")
@@ -131,6 +289,8 @@ def _db_context(user_msg: str, tenant_id: str) -> str:
             cars = q2.order("price_otr").limit(6).execute().data or []
 
         if not cars:
+            if wants_news and news_lines:
+                return "[Latest news & updates]\n" + "\n".join(news_lines)
             return ""
 
         # If asking about a specific brand/model, prefer live price/stock
@@ -144,20 +304,36 @@ def _db_context(user_msg: str, tenant_id: str) -> str:
                     if live:
                         c.update(live)
 
-        lines = ["[Structured database — available cars]"]
+        # Live specs (if a spec API is configured) — merged in per car_id.
+        specs_by_car = {}
+        if wants_spec and tenant_uuid:
+            live_specs = fetch_live_specs(tenant_uuid)
+            if live_specs:
+                for s in live_specs:
+                    specs_by_car.setdefault(s.get("car_id"), []).append(s)
+            else:
+                car_ids = [c["car_id"] for c in cars]
+                cached_specs = sb.table("car_specs").select("*") \
+                    .eq("tenant_id", tenant_uuid).in_("car_id", car_ids).execute().data or []
+                for s in cached_specs:
+                    specs_by_car.setdefault(s["car_id"], []).append(s)
+
+        if sold_out:
+            lines = ["[Structured database — model in catalogue but NO STOCK "
+                     "right now. Tell the customer it is currently unavailable "
+                     "and offer to take their details or suggest alternatives. "
+                     "Prices below are for reference only.]"]
+        else:
+            lines = ["[Structured database — available cars]"]
 
         for c in cars:
-            # Get active rebates for this car
-            rebates = sb.table("rebates").select("*")\
-                .eq("car_id", c["car_id"])\
-                .eq("is_active", True)\
-                .execute().data or []
+            rebate_str = _format_rebates(rebates_by_car.get(c["car_id"], []))
 
-            rebate_str = ""
-            if rebates:
-                total      = sum(r["amount"] for r in rebates)
-                types      = ", ".join(set(r["rebate_type"] for r in rebates))
-                rebate_str = f" | Rebat: RM{total:,.0f} ({types})"
+            spec_str = ""
+            car_specs = specs_by_car.get(c["car_id"])
+            if car_specs:
+                spec_str = " | Spec: " + ", ".join(
+                    f"{s.get('spec_key')}: {s.get('spec_value')}" for s in car_specs if s.get("spec_key"))
 
             lines.append(
                 f"• {c['brand']} {c['model']} {c['variant']} ({c['year']}) — "
@@ -166,8 +342,11 @@ def _db_context(user_msg: str, tenant_id: str) -> str:
                 f"Warna: {c['colour']} | "
                 f"Fuel: {c['fuel_cons']} km/l | "
                 f"Engine: {c['engine_cc']}cc {c['transmission']}"
-                f"{rebate_str}"
+                f"{rebate_str}{spec_str}"
             )
+
+        if wants_news and news_lines:
+            lines.insert(0, "[Latest news & updates]\n" + "\n".join(news_lines) + "\n")
 
         return "\n".join(lines)
 
