@@ -31,11 +31,17 @@
 
   async function checkLiveApi() {
     try {
-      const res  = await authedFetch(`/api/tenant/${tenantId}/external-api`);
-      const data = await res.json();
-      const hasApi = !!data.base_url;
-      document.getElementById("live-badge").style.display    = hasApi ? "inline-block" : "none";
-      document.getElementById("sync-api-btn").style.display  = hasApi ? "inline-flex"  : "none";
+      const res  = await authedFetch(`/api/tenant/${tenantId}/external-apis`);
+      const apis = await res.json();
+      const active = Array.isArray(apis) ? apis.filter(a => a.is_active) : [];
+      const hasApi = active.length > 0;
+
+      const badge = document.getElementById("live-badge");
+      badge.style.display = hasApi ? "inline-block" : "none";
+      badge.textContent   = hasApi
+        ? `Live API connected (${active.map(a => a.api_type).join(", ")})`
+        : "Live API connected";
+      document.getElementById("sync-api-btn").style.display = hasApi ? "inline-flex" : "none";
     } catch (e) { /* ignore */ }
   }
 
@@ -48,20 +54,39 @@
       btn.disabled = false;
     };
     try {
-      const res  = await authedFetch(`/api/tenant/${tenantId}/inventory/sync`, {method: "POST"});
+      // Pulls every configured feed (stock, spec, rebate, news) into Supabase.
+      const res  = await authedFetch(`/api/tenant/${tenantId}/external-apis/sync`, {method: "POST"});
       const data = await res.json();
-      if (res.ok) {
-        await loadInventory();
-        btn.textContent = `Synced ${data.synced} cars`;
-        setTimeout(resetBtn, 3000);
-      } else {
+
+      if (!res.ok) {
         alert(data.error || "Sync failed");
         resetBtn();
+        return;
       }
+
+      await loadInventory();
+
+      const results = data.results || [];
+      const failed  = results.filter(r => r.status !== "ok" && r.status !== "skipped_empty_feed");
+      const summary = results
+        .map(r => `${r.api_type}: ${r.status === "ok" ? r.written : r.status}`)
+        .join(" · ");
+
+      showSyncResult(summary, failed.length > 0);
+      btn.textContent = failed.length ? "Synced with errors" : "Synced ✓";
+      setTimeout(resetBtn, 3000);
     } catch (e) {
       alert("Network error");
       resetBtn();
     }
+  }
+
+  function showSyncResult(summary, hasError) {
+    const box = document.getElementById("sync-result");
+    if (!box) return;
+    box.style.display = "block";
+    box.className     = "info-box" + (hasError ? " info-box-warn" : "");
+    box.textContent   = `Last sync ${new Date().toLocaleTimeString("en-MY")} — ${summary}`;
   }
 
   function renderInventoryTable() {

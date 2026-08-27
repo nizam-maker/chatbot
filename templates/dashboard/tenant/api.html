@@ -69,54 +69,75 @@
   </div>
 </div>
 
-<!-- External Car API Card -->
+<!-- External APIs Card -->
 <div class="card">
   <div class="card-head">
-    <span class="card-title">External Car API (live price &amp; stock)</span>
-    <span class="badge" id="extapi-status">Not configured</span>
+    <span class="card-title">External APIs (live data)</span>
+    <button class="btn btn-primary btn-sm" onclick="openApiForm()">+ Add API</button>
   </div>
   <div class="card-body">
     <div class="info-box">
-      Optional. If your website has its own API for car list/price/stock, configure it here —
-      the chatbot will call it live for price and stock questions instead of relying only on
-      the data pushed via <code style="font-family:var(--mono)">/api/sync/stock</code>.
-      Leave blank to use the synced data only.
+      Optional. If your website has its own APIs for car stock/price, specs, rebates &amp; discounts,
+      or news &amp; updates, configure each one here — the chatbot will call it live for matching
+      questions instead of relying only on synced data. Leave empty to use synced/cached data only.
     </div>
 
-    <div class="field">
-      <label>Base URL</label>
-      <input type="text" id="ext-base-url" placeholder="https://yoursite.com/api"/>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label>List path (returns all cars)</label>
-        <input type="text" id="ext-list-path" placeholder="/cars"/>
-      </div>
-      <div class="field">
-        <label>Detail path (use {car_id})</label>
-        <input type="text" id="ext-detail-path" placeholder="/cars/{car_id}"/>
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Auth header name</label>
-        <input type="text" id="ext-auth-header" placeholder="X-API-Key"/>
-      </div>
-      <div class="field">
-        <label>Auth header value</label>
-        <input type="text" id="ext-auth-value" placeholder="secret token"/>
-      </div>
-    </div>
-    <div class="field">
-      <label>Field mapping (JSON, optional — maps our field names to yours)</label>
-      <textarea id="ext-field-map" rows="4" placeholder='{"car_id": "sku", "brand": "make", "price_otr": "price", "stock": "qty"}'></textarea>
-    </div>
+    <div id="extapi-list"></div>
 
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-primary btn-sm" onclick="saveExternalApi()">Save</button>
-      <button class="btn btn-sm" onclick="testExternalApi()">Test connection</button>
+    <!-- Add/Edit form (hidden until "Add API" or "Edit" clicked) -->
+    <div id="extapi-form" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+      <input type="hidden" id="ext-id"/>
+      <div class="field-row">
+        <div class="field">
+          <label>Name</label>
+          <input type="text" id="ext-name" placeholder="Main Stock Feed"/>
+        </div>
+        <div class="field">
+          <label>Type</label>
+          <select id="ext-type">
+            <option value="stock">Stock &amp; price</option>
+            <option value="spec">Car spec</option>
+            <option value="rebate">Rebate &amp; discount</option>
+            <option value="news">News &amp; updates</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Base URL</label>
+        <input type="text" id="ext-base-url" placeholder="https://yoursite.com/api"/>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>List path (returns all items)</label>
+          <input type="text" id="ext-list-path" placeholder="/cars"/>
+        </div>
+        <div class="field">
+          <label>Detail path (use {car_id})</label>
+          <input type="text" id="ext-detail-path" placeholder="/cars/{car_id}"/>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Auth header name</label>
+          <input type="text" id="ext-auth-header" placeholder="X-API-Key"/>
+        </div>
+        <div class="field">
+          <label>Auth header value</label>
+          <input type="text" id="ext-auth-value" placeholder="secret token"/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Field mapping (JSON, optional — maps our field names to yours)</label>
+        <textarea id="ext-field-map" rows="4" placeholder='{"car_id": "sku", "brand": "make", "price_otr": "price", "stock": "qty"}'></textarea>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="saveExternalApi()">Save</button>
+        <button class="btn btn-sm" onclick="testExternalApi()">Test connection</button>
+        <button class="btn btn-sm" onclick="closeApiForm()">Cancel</button>
+      </div>
+      <div class="result-box" id="extapi-result"></div>
     </div>
-    <div class="result-box" id="extapi-result"></div>
   </div>
 </div>
 

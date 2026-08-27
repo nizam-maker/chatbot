@@ -33,18 +33,24 @@ if platform.system() == "Linux":
     os.environ.setdefault("POPPLER_PATH",   "/usr/bin")
 
 # ── Auto-run DB init + seed on startup ───────────────────────
+#  The seed is hardcoded demo data. Once a tenant syncs its real catalogue
+#  the two collide — demo rows stay "available" with invented stock and
+#  shadow the real ones in chat answers. Off unless SEED_DEMO_DATA=true.
 try:
     from tenants.laman_auto.schema import init_db, SessionLocal
-    from tenants.laman_auto.seed import seed_cars, seed_rebates, seed_customers
     init_db()
-    with SessionLocal() as s:
-        seed_cars(s)
-        seed_rebates(s)
-        seed_customers(s)
-        s.commit()
-    print("[startup] DB ready ✓")
+    if os.getenv("SEED_DEMO_DATA", "false").lower() == "true":
+        from tenants.laman_auto.seed import seed_cars, seed_rebates, seed_customers
+        with SessionLocal() as s:
+            seed_cars(s)
+            seed_rebates(s)
+            seed_customers(s)
+            s.commit()
+        print("[startup] DB ready (demo data seeded)")
+    else:
+        print("[startup] DB ready (demo seed skipped - set SEED_DEMO_DATA=true to enable)")
 except Exception as e:
-    print(f"[startup] DB seed skipped: {e}")
+    print(f"[startup] DB init skipped: {e}")
 
 # ── Auto-ingest PDFs from knowledge/ folder on startup ────────
 try:
@@ -1327,24 +1333,24 @@ async def delete_tenant_inventory_item(tenant_id: str, car_id: str,
 @app.post("/api/tenant/{tenant_id}/inventory/sync")
 async def sync_inventory_from_api(tenant_id: str,
                                    _profile: dict = Depends(require_tenant_access)):
-    """Pull live cars from the tenant's configured external API and upsert into cars table."""
-    from core.supabase_client import sb
-    from core.tenant_api import fetch_live_cars
-    from datetime import datetime, timezone
+    """
+    Pull live cars into the cars table.
 
-    cars = fetch_live_cars(tenant_id)
-    if cars is None:
+    Kept for older clients — delegates to the shared sync so both this and
+    /external-apis/sync apply the same column filtering and reconciliation.
+    """
+    from core.sync import sync_tenant
+
+    out = sync_tenant(tenant_id, api_type="stock")
+    stock = next((r for r in out["results"] if r["api_type"] == "stock"), None)
+
+    if stock is None:
         return JSONResponse({"error": "No external API configured"}, status_code=400)
-    if not cars:
-        return JSONResponse({"error": "External API returned no cars"}, status_code=502)
+    if stock["status"] != "ok":
+        return JSONResponse({"error": f"Sync failed — {stock['status']}"}, status_code=502)
 
-    now = datetime.now(timezone.utc).isoformat()
-    for car in cars:
-        car["tenant_id"] = str(tenant_id)
-        car["updated_at"] = now
-
-    sb.table("cars").upsert(cars, on_conflict="car_id").execute()
-    return {"status": "ok", "synced": len(cars)}
+    return {"status": "ok", "synced": stock["written"],
+            "deactivated": stock["deactivated"]}
 
 
 # ── Tenant sync key management ────────────────────────────────
@@ -1389,63 +1395,116 @@ async def generate_tenant_sync_key(tenant_id: str, req: Request,
     return {"status": "ok", "sync_key": sync_key}
 
 
-# ── Tenant external car API (live price/stock pull) ──────────
+# ── Tenant external APIs (live stock/spec/rebate/news pull) ──
 
-@app.get("/api/tenant/{tenant_id}/external-api")
-async def get_external_api_config(tenant_id: str,
-                                   _profile: dict = Depends(require_tenant_access)):
-    from core.supabase_client import sb, maybe_single
-    data = maybe_single(sb.table("tenant_sync_keys").select("external_api").eq("tenant_id", tenant_id))
-    config = (data or {}).get("external_api") or {}
-    if config.get("auth_value"):
-        config = {**config, "auth_value": "••••••••"}
-    return config
+EXTERNAL_API_TYPES = {"stock", "spec", "rebate", "news"}
+EXTERNAL_API_FIELDS = ["name", "api_type", "base_url", "list_path", "detail_path",
+                        "auth_header", "auth_value", "field_map", "is_active"]
 
 
-@app.put("/api/tenant/{tenant_id}/external-api")
-async def set_external_api_config(tenant_id: str, req: Request,
-                                   _profile: dict = Depends(require_tenant_access)):
+def _mask_external_api(row: dict) -> dict:
+    if row.get("auth_value"):
+        row = {**row, "auth_value": "••••••••"}
+    return row
+
+
+@app.get("/api/tenant/{tenant_id}/external-apis")
+async def list_external_apis(tenant_id: str,
+                              _profile: dict = Depends(require_tenant_access)):
+    from core.supabase_client import sb
+    rows = sb.table("tenant_external_apis").select("*") \
+             .eq("tenant_id", tenant_id).order("created_at").execute().data or []
+    return [_mask_external_api(r) for r in rows]
+
+
+@app.post("/api/tenant/{tenant_id}/external-apis")
+async def create_external_api(tenant_id: str, req: Request,
+                               _profile: dict = Depends(require_tenant_access)):
+    from core.tenant_api import TARGET_TABLE_BY_TYPE
     from core.supabase_client import sb
     body = await req.json()
 
-    allowed = ["base_url", "list_path", "detail_path",
-               "auth_header", "auth_value", "field_map"]
-    config  = {k: body[k] for k in allowed if k in body}
+    api_type = body.get("api_type")
+    if api_type not in EXTERNAL_API_TYPES:
+        return JSONResponse({"error": f"api_type must be one of {sorted(EXTERNAL_API_TYPES)}"}, status_code=400)
+    if not body.get("name") or not body.get("base_url"):
+        return JSONResponse({"error": "name and base_url are required"}, status_code=400)
 
-    existing = sb.table("tenant_sync_keys").select("id, external_api") \
-                 .eq("tenant_id", tenant_id).execute().data
+    row = {k: body[k] for k in EXTERNAL_API_FIELDS if k in body}
+    row["tenant_id"]    = tenant_id
+    row["target_table"] = TARGET_TABLE_BY_TYPE[api_type]
+    # field_map is NOT NULL in the DB — an empty mapping means "names already match"
+    if row.get("field_map") is None:
+        row["field_map"] = {}
+
+    res = sb.table("tenant_external_apis").insert(row).execute()
+    return _mask_external_api(res.data[0])
+
+
+@app.put("/api/tenant/{tenant_id}/external-apis/{api_id}")
+async def update_external_api(tenant_id: str, api_id: str, req: Request,
+                               _profile: dict = Depends(require_tenant_access)):
+    from core.supabase_client import sb
+    body = await req.json()
+
+    existing = sb.table("tenant_external_apis").select("*") \
+                 .eq("id", api_id).eq("tenant_id", tenant_id).execute().data
+    if not existing:
+        return JSONResponse({"error": "Not found"}, status_code=404)
+
+    row = {k: body[k] for k in EXTERNAL_API_FIELDS if k in body}
 
     # Don't overwrite a real auth_value with the masked placeholder.
-    if config.get("auth_value") == "••••••••" and existing:
-        config.pop("auth_value")
-        old = (existing[0].get("external_api") or {}).get("auth_value")
-        if old:
-            config["auth_value"] = old
+    if row.get("auth_value") == "••••••••":
+        row.pop("auth_value")
 
-    if not existing:
-        return JSONResponse(
-            {"error": "Generate a sync key first (Sync Key card) before configuring the external API"},
-            status_code=400)
+    if "field_map" in row and row["field_map"] is None:
+        row["field_map"] = {}
 
-    merged = {**(existing[0].get("external_api") or {}), **config}
-    sb.table("tenant_sync_keys").update({"external_api": merged}) \
-      .eq("tenant_id", tenant_id).execute()
+    if "api_type" in row and row["api_type"] not in EXTERNAL_API_TYPES:
+        return JSONResponse({"error": f"api_type must be one of {sorted(EXTERNAL_API_TYPES)}"}, status_code=400)
 
+    sb.table("tenant_external_apis").update(row).eq("id", api_id).execute()
     return {"status": "ok"}
 
 
-@app.post("/api/tenant/{tenant_id}/external-api/test")
-async def test_external_api_config(tenant_id: str,
-                                    _profile: dict = Depends(require_tenant_access)):
-    from core.tenant_api import fetch_live_cars, get_external_api_config
+@app.delete("/api/tenant/{tenant_id}/external-apis/{api_id}")
+async def delete_external_api(tenant_id: str, api_id: str,
+                               _profile: dict = Depends(require_tenant_access)):
+    from core.supabase_client import sb
+    sb.table("tenant_external_apis").delete() \
+      .eq("id", api_id).eq("tenant_id", tenant_id).execute()
+    return {"status": "ok"}
 
-    if not get_external_api_config(tenant_id):
-        return JSONResponse({"error": "No external API configured"}, status_code=400)
 
-    cars = fetch_live_cars(tenant_id)
-    if cars is None:
+@app.post("/api/tenant/{tenant_id}/external-apis/sync")
+async def sync_external_apis(tenant_id: str, req: Request,
+                              _profile: dict = Depends(require_tenant_access)):
+    """Pull every active external API for this tenant into its cached table."""
+    from core.sync import sync_tenant
+    params = dict(req.query_params)
+    return sync_tenant(
+        tenant_id,
+        api_type=params.get("api_type"),
+        deactivate_missing=params.get("deactivate_missing", "true") != "false",
+    )
+
+
+@app.post("/api/tenant/{tenant_id}/external-apis/{api_id}/test")
+async def test_external_api(tenant_id: str, api_id: str,
+                             _profile: dict = Depends(require_tenant_access)):
+    from core.supabase_client import sb
+    from core.tenant_api import fetch_live_data
+
+    rows = sb.table("tenant_external_apis").select("*") \
+             .eq("id", api_id).eq("tenant_id", tenant_id).execute().data
+    if not rows:
+        return JSONResponse({"error": "Not found"}, status_code=404)
+
+    items = fetch_live_data(rows[0])
+    if items is None:
         return JSONResponse({"error": "Request failed — check base URL, path, and auth"}, status_code=502)
-    return {"status": "ok", "count": len(cars), "sample": cars[:3]}
+    return {"status": "ok", "count": len(items), "sample": items[:3]}
 
 
 # ── New dashboard page routes — paste into app.py ────────────

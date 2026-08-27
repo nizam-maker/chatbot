@@ -251,3 +251,113 @@ a new tenant:
 
 All configuration lives in the `tenant_sync_keys` table (`sync_key`,
 `webhook_url`, `external_api` columns), scoped per `tenant_id`.
+
+---
+
+## 6. Row shapes per `api_type`
+
+An external API row (`tenant_external_apis`) has an `api_type`. Each type is
+consumed differently by the chatbot and expects a **different JSON row
+shape** — they are not interchangeable. Pointing all types at the same
+endpoint does not work: the rows are matched against different tables.
+
+`field_map` translates your field names to ours, so the names below are the
+*target* names, not necessarily what your API must literally emit.
+
+### 6.1 `stock` → `cars` table
+
+Answers: *"Ada stock Myvi tak?"*, *"Berapa harga Saga?"*
+
+Row shape (same as the bulk push, section 3):
+
+```json
+{
+  "car_id": "PROTON-SAGA-2024-PREMIUM", "brand": "Proton", "model": "Saga",
+  "variant": "Premium CVT", "year": 2024, "price_otr": 48800, "stock": 7,
+  "status": "available", "colour": "Silver", "transmission": "CVT",
+  "fuel_cons": 16.9, "engine_cc": 1332
+}
+```
+
+`car_id` is **required** — it is the join key. Live rows are merged onto
+cached `cars` rows by `car_id`; a live row whose `car_id` is not already in
+`cars` is ignored. Live pull enriches, it never inserts.
+
+### 6.2 `spec` → `car_specs` table
+
+Answers: *"Apa spec Myvi 1.6?"*
+
+`car_specs` is **key–value (EAV)**, not one row per car. Primary key is
+`(tenant_id, car_id, spec_key)` — so emit **one row per spec attribute**:
+
+```json
+[
+  {"car_id": "PERODUA-MYVI-2024-16AV", "spec_key": "Enjin",     "spec_value": "1.6L VVT-i"},
+  {"car_id": "PERODUA-MYVI-2024-16AV", "spec_key": "Kuasa",     "spec_value": "103 hp"},
+  {"car_id": "PERODUA-MYVI-2024-16AV", "spec_key": "Tork",      "spec_value": "137 Nm"},
+  {"car_id": "PERODUA-MYVI-2024-16AV", "spec_key": "Gearbox",   "spec_value": "4-speed AT"},
+  {"car_id": "PERODUA-MYVI-2024-16AV", "spec_key": "Keselamatan","spec_value": "6 airbags, ASA 3.0"}
+]
+```
+
+| Field        | Type   | Notes                                        |
+|--------------|--------|-----------------------------------------------|
+| `car_id`     | string | Must match a `cars.car_id`                    |
+| `spec_key`   | string | Attribute label, shown to the customer as-is  |
+| `spec_value` | string | Free text — units included                    |
+
+Rows without a `spec_key` are silently dropped. `spec_key`/`spec_value` are
+rendered verbatim into the prompt, so write them in the language the
+customer is served in.
+
+Only fetched when the message contains a spec keyword
+(`spec`, `spesifikasi`, `horsepower`, `torque`, `dimension`, `kuasa`).
+
+### 6.3 `rebate` → `rebates` table
+
+Answers: *"Ada rebate tak?"*
+
+```json
+{
+  "car_id": "PROTON-SAGA-2024-PREMIUM", "amount": 2000,
+  "rebate_type": "Trade-in", "description": "Bonus tukar beli",
+  "valid_from": "2026-08-01T00:00:00Z", "valid_until": "2026-09-30T00:00:00Z",
+  "is_active": true
+}
+```
+
+| Field         | Type    | Notes                                      |
+|---------------|---------|---------------------------------------------|
+| `car_id`      | string  | FK to `cars.car_id`                         |
+| `amount`      | number  | Required (RM). Summed across rebates        |
+| `rebate_type` | string  | Shown grouped, e.g. "Trade-in, Loyalty"     |
+| `is_active`   | boolean | Only `true` rows are used                   |
+
+> **Not wired for live pull yet.** `fetch_live_rebates()` exists in
+> `core/tenant_api.py` but has no call site — the engine reads the `rebates`
+> table directly. Configuring a `rebate` external API today has no effect;
+> keep rebates fresh via the bulk push / direct table writes.
+
+### 6.4 `news` → `news_updates` table
+
+Answers: *"Ada berita terkini tak?"*
+
+```json
+{"title": "Promosi Merdeka 2026", "body": "Rebat sehingga RM3,000",
+ "source_url": "https://...", "published_at": "2026-08-01T00:00:00Z"}
+```
+
+`title` is required; rows without it are skipped. Top 5 by `published_at`.
+Only fetched on a news keyword (`berita`, `news`, `terkini`, `update`,
+`pengumuman`, `announcement`).
+
+### 6.5 The cached tables are the source of truth
+
+Live pull is an **overlay**, not a replacement:
+
+- The engine queries `cars` **first**. If it returns nothing for the tenant,
+  it returns an empty context and **no live API is called at all**.
+- `stock` and `spec` live rows are joined onto that result by `car_id`.
+- So the bulk push (section 3) must keep `cars` populated regardless of
+  whether live pull is configured. Live pull only refreshes values on cars
+  that already exist.
